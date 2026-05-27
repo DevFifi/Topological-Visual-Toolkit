@@ -14,10 +14,10 @@ def render() -> None:
     
     col1, col2 = st.columns(2)
     with col1:
-        f_str = input_with_history("Funkcja f(x, y)", "functions_2d", "preimg_f", default_val="x^2 + y^2")
+        f_str = input_with_history("Funkcja f(x, y)", "functions_2d", "preimg_f", default_val="(x^2+y^2-1)^3 - x^2*y^3")
         save_to_history_button("functions_2d", f_str, "f(x, y)")
     with col2:
-        a_str = input_with_history("Zbiór A ⊆ R (np. [0, 1])", "sets_r", "preimg_a", default_val="[0, 1]")
+        a_str = input_with_history("Zbiór A ⊆ R (np. [0, 1])", "sets_r", "preimg_a", default_val="(-oo, 0)")
         save_to_history_button("sets_r", a_str, "Zbiór A")
         
     st.subheader("Sprawdzenie punktu (x0, y0)")
@@ -86,13 +86,13 @@ def render() -> None:
                 Z_bool[i, j] = a_set.contains_numeric(Z_val[i, j])
                 
         fig = go.Figure()
-        fig.add_trace(go.Contour(
+        fig.add_trace(go.Heatmap(
             z=Z_bool.astype(int),
             x=x_vals,
             y=y_vals,
             colorscale=[[0, 'white'], [1, 'lightblue']],
             showscale=False,
-            contours=dict(coloring='heatmap')
+            hoverinfo='skip'
         ))
         
         fig.add_trace(go.Scatter(
