@@ -5,7 +5,7 @@ def apply_global_styles() -> None:
         <style>
         #MainMenu {visibility: hidden;}
         footer {visibility: hidden;}
-        header {visibility: hidden;}
+        [data-testid="stHeaderActionElements"] {display: none;}
 
         .stApp {
             background-color: #fbfbfb;

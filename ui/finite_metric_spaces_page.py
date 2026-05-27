@@ -6,7 +6,7 @@ from math_modules.finite_metric_spaces import compute_diam, compute_dist_sets, c
 from ui.components import input_with_history, save_to_history_button, render_dual_value, render_distance_matrix_html
 from core.formatting import format_point
 
-def _parse_points(text: str, dim: int) -> Tuple[list, bool]:
+def _parse_points(text: str, dim: int, strict: bool = True) -> Tuple[list, bool]:
     points = []
     all_valid = True
     text = text.strip()
@@ -28,10 +28,13 @@ def _parse_points(text: str, dim: int) -> Tuple[list, bool]:
                     res_c = parse_expression(str(c))
                     if res_c.is_valid:
                         res_p.append(res_c.expr)
-                if len(res_p) == dim:
-                    points.append(tuple(res_p))
+                if strict:
+                    if len(res_p) == dim:
+                        points.append(tuple(res_p))
+                    else:
+                        all_valid = False
                 else:
-                    all_valid = False
+                    points.append(tuple(res_p))
             return points, all_valid
         except Exception:
             pass
@@ -54,10 +57,13 @@ def _parse_points(text: str, dim: int) -> Tuple[list, bool]:
                 res_c = parse_expression(p.strip())
                 if res_c.is_valid:
                     res_p.append(res_c.expr)
-            if len(res_p) == dim:
-                points.append(tuple(res_p))
+            if strict:
+                if len(res_p) == dim:
+                    points.append(tuple(res_p))
+                else:
+                    all_valid = False
             else:
-                all_valid = False
+                points.append(tuple(res_p))
         else:
             all_valid = False
     return points, all_valid
@@ -81,11 +87,11 @@ def render() -> None:
                     st.warning(f"Zmiana wymiaru z {old_dim} na {new_dim} obetnie punkty w zbiorach. Zatwierdź zmianę.")
                     if st.button("Zatwierdź zmianę wymiaru"):
                         if "points_e_input" in st.session_state:
-                            parsed_e, _ = _parse_points(st.session_state["points_e_input"], old_dim)
+                            parsed_e, _ = _parse_points(st.session_state["points_e_input"], old_dim, strict=False)
                             if parsed_e:
                                 st.session_state["points_e_input"] = "\n".join(format_point(tuple(p[:new_dim])) for p in parsed_e)
                         if "points_f_input" in st.session_state and st.session_state["points_f_input"]:
-                            parsed_f, _ = _parse_points(st.session_state["points_f_input"], old_dim)
+                            parsed_f, _ = _parse_points(st.session_state["points_f_input"], old_dim, strict=False)
                             if parsed_f:
                                 st.session_state["points_f_input"] = "\n".join(format_point(tuple(p[:new_dim])) for p in parsed_f)
                                 
@@ -93,13 +99,13 @@ def render() -> None:
                         dim = new_dim
                 else:
                     if "points_e_input" in st.session_state:
-                        parsed_e, _ = _parse_points(st.session_state["points_e_input"], old_dim)
+                        parsed_e, _ = _parse_points(st.session_state["points_e_input"], old_dim, strict=False)
                         if parsed_e:
-                            st.session_state["points_e_input"] = "\n".join(format_point(tuple(list(p) + [0]*(new_dim - old_dim))) for p in parsed_e)
+                            st.session_state["points_e_input"] = "\n".join(format_point(tuple(list(p) + [0]*(new_dim - len(p)))) for p in parsed_e)
                     if "points_f_input" in st.session_state and st.session_state["points_f_input"]:
-                        parsed_f, _ = _parse_points(st.session_state["points_f_input"], old_dim)
+                        parsed_f, _ = _parse_points(st.session_state["points_f_input"], old_dim, strict=False)
                         if parsed_f:
-                            st.session_state["points_f_input"] = "\n".join(format_point(tuple(list(p) + [0]*(new_dim - old_dim))) for p in parsed_f)
+                            st.session_state["points_f_input"] = "\n".join(format_point(tuple(list(p) + [0]*(new_dim - len(p)))) for p in parsed_f)
                             
                     st.session_state.metric_dim = new_dim
                     dim = new_dim
