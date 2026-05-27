@@ -15,6 +15,7 @@ def _create_namespace() -> Dict[str, Any]:
     ns: Dict[str, Any] = {
         "pi": sympy.pi,
         "E": sympy.E,
+        "e": sympy.E,
         "sqrt": sympy.sqrt,
         "Abs": sympy.Abs,
         "sin": sympy.sin,
