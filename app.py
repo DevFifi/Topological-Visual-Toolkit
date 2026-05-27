@@ -9,6 +9,7 @@ import ui.scalar_preimage_page as p5
 import ui.vector_mapping_images_page as p6
 import ui.memory_page as mem
 import ui.documentation_page as doc
+from ui.math_keyboard import render_math_keyboard
 
 st.set_page_config(
     page_title="Topological Visual Toolkit",
@@ -32,6 +33,9 @@ page = st.sidebar.radio(
         "Dokumentacja"
     ]
 )
+
+with st.sidebar.expander("Klawiatura Matematyczna", expanded=False):
+    render_math_keyboard()
 
 if page == "Przestrzenie Metryczne":
     p1.render()

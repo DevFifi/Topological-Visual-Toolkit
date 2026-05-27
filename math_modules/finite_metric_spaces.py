@@ -3,8 +3,36 @@ from typing import List, Tuple, Any, Optional
 from core.exact_numeric import DualValue
 from core.expression_parser import parse_expression
 
+def expand_sum_macro(formula_str: str, dim: int) -> str:
+    if "SUM(" not in formula_str:
+        return formula_str
+    res = ""
+    i = 0
+    while i < len(formula_str):
+        if formula_str[i:].startswith("SUM("):
+            start = i + 4
+            paren_count = 1
+            j = start
+            while j < len(formula_str) and paren_count > 0:
+                if formula_str[j] == '(': paren_count += 1
+                elif formula_str[j] == ')': paren_count -= 1
+                j += 1
+            if paren_count == 0:
+                inner_expr = formula_str[start:j-1]
+                expanded = []
+                for k in range(1, dim + 1):
+                    term = inner_expr.replace("xi", f"x{k}").replace("yi", f"y{k}")
+                    expanded.append(f"({term})")
+                res += "(" + " + ".join(expanded) + ")"
+                i = j
+                continue
+        res += formula_str[i]
+        i += 1
+    return res
+
 def _get_distance_formula(metric_name: str, custom_formula: str, dim: int) -> Tuple[Optional[Any], str]:
     if metric_name == "custom" and custom_formula:
+        custom_formula = expand_sum_macro(custom_formula, dim)
         res = parse_expression(custom_formula)
         if res.is_valid:
             return res.expr, "exact_and_numeric"
@@ -21,6 +49,15 @@ def _get_distance_formula(metric_name: str, custom_formula: str, dim: int) -> Tu
         return sympy.Max(*[sympy.Abs(x - y) for x, y in zip(x_vars, y_vars)]), "exact_and_numeric"
     elif metric_name == "Discrete":
         return None, "discrete_special"
+    elif metric_name == "Minkowski":
+        try:
+            p_val = float(custom_formula)
+            if p_val < 1:
+                return sum(sympy.Abs(x - y)**p_val for x, y in zip(x_vars, y_vars)), "exact_and_numeric"
+            else:
+                return (sum(sympy.Abs(x - y)**p_val for x, y in zip(x_vars, y_vars)))**(1/p_val), "exact_and_numeric"
+        except Exception:
+            return None, "error"
         
     return None, "error"
 

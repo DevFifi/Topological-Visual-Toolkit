@@ -3,6 +3,10 @@ import streamlit as st
 def apply_global_styles() -> None:
     st.markdown("""
         <style>
+        #MainMenu {visibility: hidden;}
+        footer {visibility: hidden;}
+        header {visibility: hidden;}
+
         .stApp {
             background-color: #fbfbfb;
             font-family: 'Inter', sans-serif;

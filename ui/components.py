@@ -25,60 +25,57 @@ def render_dual_value(dv: DualValue, title: str = "Wynik") -> None:
     for note in dv.notes:
         st.info(note)
 
-def render_distance_matrix_html(headers: List[str], rows: List[List[DualValue]]) -> None:
-    html = "<table style='width: 100%; border-collapse: collapse; margin-bottom: 1rem;'>"
-    
-    html += "<tr><th style='padding: 8px; border-bottom: 2px solid #ddd;'></th>"
+def render_distance_matrix_html(headers: List[str], matrix: List[List['DualValue']], row_headers: Optional[List[str]] = None) -> None:
+    if row_headers is None:
+        row_headers = headers
+    html = "<div style='overflow-x: auto;'><table style='border-collapse: collapse; width: 100%; font-size: 14px;'>"
+    html += "<tr><th style='border: 1px solid #ddd; padding: 8px; background-color: #f2f2f2;'></th>"
     for h in headers:
-        html += f"<th style='padding: 8px; border-bottom: 2px solid #ddd; text-align: center;'>{h}</th>"
+        html += f"<th style='border: 1px solid #ddd; padding: 8px; background-color: #f2f2f2; text-align: center;'>{h}</th>"
     html += "</tr>"
     
-    for i, row in enumerate(rows):
-        html += f"<tr><th style='padding: 8px; border-right: 2px solid #ddd; text-align: right;'>{headers[i]}</th>"
-        for dv in row:
-            html += "<td style='padding: 4px;'>"
+    for i, row in enumerate(matrix):
+        html += f"<tr><th style='border: 1px solid #ddd; padding: 8px; background-color: #f2f2f2;'>{row_headers[i]}</th>"
+        for j, dv in enumerate(row):
+            html += "<td style='border: 1px solid #ddd; padding: 8px; text-align: center;'>"
             if dv.status in ["exact", "exact_and_numeric"] and dv.exact and dv.numeric:
                 html += f"""
-                <div class='table-cell-dual'>
-                    <div class='table-cell-exact' title='{dv.exact}'>{dv.exact}</div>
-                    <div class='table-cell-numeric'>{dv.numeric}</div>
-                </div>
+                <div style='color: #1f77b4; font-weight: bold;' title='{dv.exact}'>{dv.exact}</div>
+                <div style='color: #666; font-size: 0.9em;'>{dv.numeric}</div>
                 """
             elif dv.status == "interval" and dv.interval:
-                html += f"<div class='table-cell-single' title='wartość ∈ [{dv.interval[0]}, {dv.interval[1]}]'>∈ [{dv.interval[0]}, {dv.interval[1]}]</div>"
+                html += f"<div title='wartość ∈ [{dv.interval[0]}, {dv.interval[1]}]'>∈ [{dv.interval[0]}, {dv.interval[1]}]</div>"
             elif dv.status == "numeric" and dv.numeric:
-                html += f"<div class='table-cell-single' title='≈ {dv.numeric}'>≈ {dv.numeric}</div>"
+                html += f"<div title='≈ {dv.numeric}'>≈ {dv.numeric}</div>"
             elif dv.exact:
-                html += f"<div class='table-cell-single' title='{dv.exact}'>{dv.exact}</div>"
+                html += f"<div title='{dv.exact}'>{dv.exact}</div>"
             else:
-                html += "<div class='table-cell-single'>?</div>"
+                html += "<div>?</div>"
             html += "</td>"
         html += "</tr>"
         
-    html += "</table>"
+    html += "</table></div>"
     st.markdown(html, unsafe_allow_html=True)
 
 def input_with_history(
     label: str,
-    category: str,
+    history_category: str,
     key: str,
     default_val: str = "",
-    help_text: str = ""
+    multiline: bool = False
 ) -> str:
-    history = get_history(category)
-    options = ["-- Nowy wpis --"] + [h["raw_value"] for h in history]
+    history = get_history(history_category)
+    options = ["-- Wpisz ręcznie --"] + [h["raw_value"] for h in history]
     
-    col1, col2 = st.columns([1, 3])
+    selected = st.selectbox(f"Historia: {label}", options, key=f"{key}_history")
     
-    with col1:
-        selected = st.selectbox(f"Historia ({category})", options, key=f"{key}_hist")
+    if selected != "-- Wpisz ręcznie --":
+        default_val = selected
         
-    with col2:
-        current_default = default_val
-        if selected != "-- Nowy wpis --":
-            current_default = selected
-            
-        val = st.text_input(label, value=current_default, key=f"{key}_input", help=help_text)
+    if multiline:
+        val = st.text_area(label, value=default_val, key=f"{key}_input", height=100)
+    else:
+        val = st.text_input(label, value=default_val, key=f"{key}_input")
         
     return val
 
