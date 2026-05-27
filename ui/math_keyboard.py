@@ -1,7 +1,8 @@
 import streamlit as st
+import textwrap
 
 def render_math_keyboard():
-    html_code = """
+    html_code = textwrap.dedent("""
     <style>
     .mk-container { padding: 12px; font-family: 'Inter', sans-serif; background-color: #fcfcfc; border-radius: 8px; border: 1px solid #eaeaea; }
     .mk-group { margin-bottom: 12px; }
@@ -113,6 +114,6 @@ def render_math_keyboard():
         }
     }
     </script>
-    """
+    """)
     
     st.markdown(html_code, unsafe_allow_html=True)
