@@ -3,21 +3,21 @@ import streamlit as st
 def render_math_keyboard():
     html_code = """
     <div id="math-keyboard" style="padding: 5px; font-family: sans-serif; background-color: #fbfbfb; border-radius: 8px; border: 1px solid #ddd; display: flex; flex-wrap: wrap;">
-        <button onmousedown="event.preventDefault(); insertSymbol('π')" style="font-size: 14px; padding: 4px 8px; margin: 2px; cursor: pointer; border-radius: 4px; border: 1px solid #ccc; background: white;">π</button>
-        <button onmousedown="event.preventDefault(); insertSymbol('e')" style="font-size: 14px; padding: 4px 8px; margin: 2px; cursor: pointer; border-radius: 4px; border: 1px solid #ccc; background: white;">e</button>
-        <button onmousedown="event.preventDefault(); insertSymbol('√()', 1)" style="font-size: 14px; padding: 4px 8px; margin: 2px; cursor: pointer; border-radius: 4px; border: 1px solid #ccc; background: white;">√</button>
-        <button onmousedown="event.preventDefault(); insertSymbol('^')" style="font-size: 14px; padding: 4px 8px; margin: 2px; cursor: pointer; border-radius: 4px; border: 1px solid #ccc; background: white;">^</button>
-        <button onmousedown="event.preventDefault(); insertSymbol('SUM()', 1)" style="font-size: 14px; padding: 4px 8px; margin: 2px; cursor: pointer; border-radius: 4px; border: 1px solid #ccc; background: white;">∑</button>
-        <button onmousedown="event.preventDefault(); insertSymbol('Abs()', 1)" style="font-size: 14px; padding: 4px 8px; margin: 2px; cursor: pointer; border-radius: 4px; border: 1px solid #ccc; background: white;">|x|</button>
-        <button onmousedown="event.preventDefault(); insertSymbol('∞')" style="font-size: 14px; padding: 4px 8px; margin: 2px; cursor: pointer; border-radius: 4px; border: 1px solid #ccc; background: white;">∞</button>
-        <button onmousedown="event.preventDefault(); insertSymbol('^2')" style="font-size: 14px; padding: 4px 8px; margin: 2px; cursor: pointer; border-radius: 4px; border: 1px solid #ccc; background: white;">x²</button>
-        <button onmousedown="event.preventDefault(); insertSymbol('sin()', 1)" style="font-size: 14px; padding: 4px 8px; margin: 2px; cursor: pointer; border-radius: 4px; border: 1px solid #ccc; background: white;">sin</button>
-        <button onmousedown="event.preventDefault(); insertSymbol('cos()', 1)" style="font-size: 14px; padding: 4px 8px; margin: 2px; cursor: pointer; border-radius: 4px; border: 1px solid #ccc; background: white;">cos</button>
-        <button onmousedown="event.preventDefault(); insertSymbol('tan()', 1)" style="font-size: 14px; padding: 4px 8px; margin: 2px; cursor: pointer; border-radius: 4px; border: 1px solid #ccc; background: white;">tan</button>
-        <button onmousedown="event.preventDefault(); insertSymbol('exp()', 1)" style="font-size: 14px; padding: 4px 8px; margin: 2px; cursor: pointer; border-radius: 4px; border: 1px solid #ccc; background: white;">exp</button>
-        <button onmousedown="event.preventDefault(); insertSymbol('log()', 1)" style="font-size: 14px; padding: 4px 8px; margin: 2px; cursor: pointer; border-radius: 4px; border: 1px solid #ccc; background: white;">log</button>
-        <button onmousedown="event.preventDefault(); insertSymbol('Min(,)', 2)" style="font-size: 14px; padding: 4px 8px; margin: 2px; cursor: pointer; border-radius: 4px; border: 1px solid #ccc; background: white;">Min</button>
-        <button onmousedown="event.preventDefault(); insertSymbol('Max(,)', 2)" style="font-size: 14px; padding: 4px 8px; margin: 2px; cursor: pointer; border-radius: 4px; border: 1px solid #ccc; background: white;">Max</button>
+        <button type="button" onmousedown="event.preventDefault(); insertSymbol('π')" style="font-size: 14px; padding: 4px 8px; margin: 2px; cursor: pointer; border-radius: 4px; border: 1px solid #ccc; background: white;">π</button>
+        <button type="button" onmousedown="event.preventDefault(); insertSymbol('e')" style="font-size: 14px; padding: 4px 8px; margin: 2px; cursor: pointer; border-radius: 4px; border: 1px solid #ccc; background: white;">e</button>
+        <button type="button" onmousedown="event.preventDefault(); insertSymbol('√()', 1)" style="font-size: 14px; padding: 4px 8px; margin: 2px; cursor: pointer; border-radius: 4px; border: 1px solid #ccc; background: white;">√</button>
+        <button type="button" onmousedown="event.preventDefault(); insertSymbol('^')" style="font-size: 14px; padding: 4px 8px; margin: 2px; cursor: pointer; border-radius: 4px; border: 1px solid #ccc; background: white;">^</button>
+        <button type="button" onmousedown="event.preventDefault(); insertSymbol('SUM()', 1)" style="font-size: 14px; padding: 4px 8px; margin: 2px; cursor: pointer; border-radius: 4px; border: 1px solid #ccc; background: white;">∑</button>
+        <button type="button" onmousedown="event.preventDefault(); insertSymbol('Abs()', 1)" style="font-size: 14px; padding: 4px 8px; margin: 2px; cursor: pointer; border-radius: 4px; border: 1px solid #ccc; background: white;">|x|</button>
+        <button type="button" onmousedown="event.preventDefault(); insertSymbol('∞')" style="font-size: 14px; padding: 4px 8px; margin: 2px; cursor: pointer; border-radius: 4px; border: 1px solid #ccc; background: white;">∞</button>
+        <button type="button" onmousedown="event.preventDefault(); insertSymbol('^2')" style="font-size: 14px; padding: 4px 8px; margin: 2px; cursor: pointer; border-radius: 4px; border: 1px solid #ccc; background: white;">x²</button>
+        <button type="button" onmousedown="event.preventDefault(); insertSymbol('sin()', 1)" style="font-size: 14px; padding: 4px 8px; margin: 2px; cursor: pointer; border-radius: 4px; border: 1px solid #ccc; background: white;">sin</button>
+        <button type="button" onmousedown="event.preventDefault(); insertSymbol('cos()', 1)" style="font-size: 14px; padding: 4px 8px; margin: 2px; cursor: pointer; border-radius: 4px; border: 1px solid #ccc; background: white;">cos</button>
+        <button type="button" onmousedown="event.preventDefault(); insertSymbol('tan()', 1)" style="font-size: 14px; padding: 4px 8px; margin: 2px; cursor: pointer; border-radius: 4px; border: 1px solid #ccc; background: white;">tan</button>
+        <button type="button" onmousedown="event.preventDefault(); insertSymbol('exp()', 1)" style="font-size: 14px; padding: 4px 8px; margin: 2px; cursor: pointer; border-radius: 4px; border: 1px solid #ccc; background: white;">exp</button>
+        <button type="button" onmousedown="event.preventDefault(); insertSymbol('log()', 1)" style="font-size: 14px; padding: 4px 8px; margin: 2px; cursor: pointer; border-radius: 4px; border: 1px solid #ccc; background: white;">log</button>
+        <button type="button" onmousedown="event.preventDefault(); insertSymbol('Min(,)', 2)" style="font-size: 14px; padding: 4px 8px; margin: 2px; cursor: pointer; border-radius: 4px; border: 1px solid #ccc; background: white;">Min</button>
+        <button type="button" onmousedown="event.preventDefault(); insertSymbol('Max(,)', 2)" style="font-size: 14px; padding: 4px 8px; margin: 2px; cursor: pointer; border-radius: 4px; border: 1px solid #ccc; background: white;">Max</button>
     </div>
     
     <script>
@@ -45,6 +45,12 @@ def render_math_keyboard():
                 
                 let event = new Event('input', { bubbles: true });
                 activeEl.dispatchEvent(event);
+                
+                // Wymuś odświeżenie fokusu
+                setTimeout(() => {
+                    activeEl.focus();
+                    activeEl.setSelectionRange(newPos, newPos);
+                }, 10);
             } else {
                 console.log("Kliknij na pole tekstowe przed dodaniem symbolu.");
             }

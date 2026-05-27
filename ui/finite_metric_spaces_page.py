@@ -64,6 +64,7 @@ def render() -> None:
         col1, col2 = st.columns(2)
         with col1:
             new_dim = st.number_input("Wymiar n", min_value=1, value=old_dim, step=1)
+            dim = old_dim
             if new_dim != old_dim:
                 if new_dim < old_dim:
                     st.warning(f"Zmiana wymiaru z {old_dim} na {new_dim} obetnie punkty w zbiorach. Zatwierdź zmianę.")
@@ -78,12 +79,10 @@ def render() -> None:
                                 st.session_state["points_f_input"] = "\n".join(format_point(tuple(p[:new_dim])) for p in parsed_f)
                                 
                         st.session_state.metric_dim = new_dim
-                        st.rerun()
+                        dim = new_dim
                 else:
                     st.session_state.metric_dim = new_dim
-                    st.rerun()
-                    
-        dim = st.session_state.metric_dim
+                    dim = new_dim
         
         with col2:
             metric = st.selectbox(
