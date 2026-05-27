@@ -82,7 +82,11 @@ class Inequality2D(ParsedSet):
     def contains_symbolic(self, point: Any) -> Any:
         try:
             px, py = point
-            subbed = self.expr.subs({"x": px, "y": py, "u": px, "v": py})
+            x_sym = sympy.Symbol("x", real=True)
+            y_sym = sympy.Symbol("y", real=True)
+            u_sym = sympy.Symbol("u", real=True)
+            v_sym = sympy.Symbol("v", real=True)
+            subbed = self.expr.subs({x_sym: px, y_sym: py, u_sym: px, v_sym: py})
             return subbed
         except Exception:
             return False
@@ -90,7 +94,11 @@ class Inequality2D(ParsedSet):
     def contains_numeric(self, point: Any) -> bool:
         try:
             px, py = float(point[0]), float(point[1])
-            subbed = self.expr.subs({"x": px, "y": py, "u": px, "v": py})
+            x_sym = sympy.Symbol("x", real=True)
+            y_sym = sympy.Symbol("y", real=True)
+            u_sym = sympy.Symbol("u", real=True)
+            v_sym = sympy.Symbol("v", real=True)
+            subbed = self.expr.subs({x_sym: px, y_sym: py, u_sym: px, v_sym: py})
             return bool(subbed)
         except Exception:
             return False

@@ -91,6 +91,8 @@ def render() -> None:
             x=x_vals,
             y=y_vals,
             colorscale=[[0, 'white'], [1, 'lightblue']],
+            zmin=0,
+            zmax=1,
             showscale=False,
             hoverinfo='skip'
         ))
