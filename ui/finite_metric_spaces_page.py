@@ -58,14 +58,25 @@ def render() -> None:
     if "metric_dim" not in st.session_state:
         st.session_state.metric_dim = 2
         
+    old_dim = st.session_state.metric_dim
+        
     with st.container():
         col1, col2 = st.columns(2)
         with col1:
-            new_dim = st.number_input("Wymiar n", min_value=1, value=st.session_state.metric_dim, step=1)
-            if new_dim != st.session_state.metric_dim:
-                if new_dim < st.session_state.metric_dim:
-                    st.warning(f"Zmiana wymiaru z {st.session_state.metric_dim} na {new_dim} obetnie punkty w zbiorach. Zatwierdź zmianę.")
+            new_dim = st.number_input("Wymiar n", min_value=1, value=old_dim, step=1)
+            if new_dim != old_dim:
+                if new_dim < old_dim:
+                    st.warning(f"Zmiana wymiaru z {old_dim} na {new_dim} obetnie punkty w zbiorach. Zatwierdź zmianę.")
                     if st.button("Zatwierdź zmianę wymiaru"):
+                        if "points_e_input" in st.session_state:
+                            parsed_e = _parse_points(st.session_state["points_e_input"], old_dim)
+                            if parsed_e:
+                                st.session_state["points_e_input"] = "\n".join(format_point(tuple(p[:new_dim])) for p in parsed_e)
+                        if "points_f_input" in st.session_state and st.session_state["points_f_input"]:
+                            parsed_f = _parse_points(st.session_state["points_f_input"], old_dim)
+                            if parsed_f:
+                                st.session_state["points_f_input"] = "\n".join(format_point(tuple(p[:new_dim])) for p in parsed_f)
+                                
                         st.session_state.metric_dim = new_dim
                         st.rerun()
                 else:
@@ -95,7 +106,12 @@ def render() -> None:
             if st_status == "error":
                 st.error("Błąd parsowania wzoru metryki.")
             else:
-                st.success(f"Wzór poprawny: {f}")
+                from math_modules.metric_validation import validate_metric_heuristically
+                is_valid, msg = validate_metric_heuristically(f, "custom", dim)
+                if is_valid:
+                    st.success(msg)
+                else:
+                    st.error(msg)
             save_to_history_button("custom_metrics", custom_formula, "Wzór metryki")
     elif metric == "Minkowski":
         custom_formula = st.text_input("Parametr p", value="2")

@@ -1,5 +1,5 @@
 import streamlit as st
-from typing import List, Dict, Any, Callable
+from typing import List, Dict, Any, Callable, Optional
 from core.exact_numeric import DualValue
 from core.history import get_history, add_or_update_history_entry
 
