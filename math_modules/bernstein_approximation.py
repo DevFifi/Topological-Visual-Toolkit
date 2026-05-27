@@ -11,14 +11,17 @@ def compute_bernstein_polynomial(f_expr: Any, n: int) -> Tuple[Any, Callable]:
     
     # Exact symbolic computation for small n
     exact_b_n = None
-    if n <= 30:
+    if n <= 15:  # Zmniejszamy próg, by nie obciążać SymPy dla trygonometrii
         try:
             terms = []
             for k in range(n + 1):
                 binom = sympy.binomial(n, k)
-                term = binom * (x**k) * ((1 - x)**(n - k)) * f_expr.subs(x, sympy.Rational(k, n))
+                val = f_expr.subs(x, sympy.Rational(k, n))
+                if not val.is_Rational and not val.is_Integer:
+                    val = val.evalf(5) # przybliżamy, by sympy nie wisiało na sin(1/15)
+                term = binom * (x**k) * ((1 - x)**(n - k)) * val
                 terms.append(term)
-            exact_b_n = sum(terms)
+            exact_b_n = sympy.expand(sum(terms))
         except Exception:
             pass
             
@@ -40,25 +43,25 @@ def compute_bernstein_polynomial(f_expr: Any, n: int) -> Tuple[Any, Callable]:
 
 def compute_bernstein_error(f_expr: Any, exact_b_n: Any, b_num: Callable, n: int, precision: int = 50) -> DualValue:
     x = sympy.Symbol("x", real=True)
+    f_num = create_numpy_func_1d(f_expr, x)
     
-    # Fallback expression for numerical evaluation if exact is too big
-    if exact_b_n is not None:
-        g_expr = exact_b_n
+    # Zadanie mówi "w rozsądnym przybliżeniu - odległość Czebyszewa"
+    # Szukamy supremum numerycznie na gęstej siatce (jest to optymalne i szybkie)
+    grid_size = 5000 + n * 50
+    x_vals = np.linspace(0.0, 1.0, grid_size)
+    
+    y_f = f_num(x_vals)
+    y_b = b_num(x_vals)
+    err = np.abs(y_f - y_b)
+    
+    valid = ~np.isnan(err)
+    if not np.any(valid):
+        max_err = float('nan')
     else:
-        g_expr = sympy.Symbol("B_n(x)") # Placeholder
+        max_err = np.max(err[valid])
         
-    dv, _, _, _, _ = compute_supremum_interval(f_expr, g_expr, 0.0, 1.0, precision=precision)
-    
-    # If the interval computation used the placeholder and failed, compute manually
-    if dv.numeric is None or exact_b_n is None:
-        f_num = create_numpy_func_1d(f_expr, x)
-        x_vals = np.linspace(0.0, 1.0, 2000)
-        err = np.abs(f_num(x_vals) - b_num(x_vals))
-        max_err = np.nanmax(err)
-        dv = DualValue(
-            numeric=str(max_err),
-            status="numeric",
-            method="Aproksymacja numeryczna błędu (siatka z 2000 punktów)"
-        )
-        
-    return dv
+    return DualValue(
+        numeric=str(max_err),
+        status="numeric",
+        method=f"Aproksymacja numeryczna siatką ({grid_size} pkt)"
+    )

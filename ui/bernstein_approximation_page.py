@@ -52,3 +52,79 @@ def render() -> None:
         
         fig.update_layout(template="plotly_white", margin=dict(l=20, r=20, t=30, b=20))
         st.plotly_chart(fig, use_container_width=True)
+
+    if st.button("Animacja ewolucji (od 1 do n)", type="secondary"):
+        f_res = parse_expression(f_str)
+        if not f_res.is_valid:
+            st.error("Błąd w składni funkcji.")
+            return
+            
+        x_vals = np.linspace(0, 1, 300)
+        x = sympy.Symbol("x", real=True)
+        f_num = create_numpy_func_1d(f_res.expr, x)
+        y_f = f_num(x_vals)
+        
+        y_min, y_max = np.nanmin(y_f), np.nanmax(y_f)
+        padding = (y_max - y_min) * 0.3 if y_max != y_min else 1.0
+        
+        frames = []
+        max_n = max(2, min(n, 100)) # Ograniczenie dla wydajności przeglądarki
+        
+        progress = st.progress(0, text="Generowanie klatek animacji...")
+        for i in range(1, max_n + 1):
+            _, b_num_i = compute_bernstein_polynomial(f_res.expr, i)
+            y_b_i = b_num_i(x_vals)
+            frames.append(go.Frame(data=[go.Scatter(x=x_vals, y=y_b_i)], name=str(i), traces=[1]))
+            progress.progress(i / max_n, text=f"Generowanie klatki {i}/{max_n}...")
+            
+        progress.empty()
+
+        fig_anim = go.Figure(
+            data=[
+                go.Scatter(x=x_vals, y=y_f, mode='lines', name='f(x)', line=dict(color='blue')),
+                go.Scatter(x=x_vals, y=frames[0].data[0].y, mode='lines', name='B_n(f)(x)', line=dict(color='red'))
+            ],
+            layout=go.Layout(
+                template="plotly_white",
+                title="Ewolucja wielomianu Bernsteina",
+                yaxis=dict(range=[y_min - padding, y_max + padding]),
+                updatemenus=[dict(
+                    type="buttons",
+                    showactive=False,
+                    y=-0.15,
+                    x=0.05,
+                    xanchor="right",
+                    yanchor="top",
+                    buttons=[
+                        dict(label="Odtwarzaj",
+                             method="animate",
+                             args=[None, {"frame": {"duration": 250, "redraw": False},
+                                          "fromcurrent": True, "transition": {"duration": 150}}]),
+                        dict(label="Pauza",
+                             method="animate",
+                             args=[[None], {"frame": {"duration": 0, "redraw": False},
+                                            "mode": "immediate",
+                                            "transition": {"duration": 0}}])
+                    ]
+                )],
+                sliders=[dict(
+                    active=0,
+                    yanchor="top",
+                    xanchor="left",
+                    currentvalue=dict(font=dict(size=14), prefix="n = ", visible=True, xanchor="right"),
+                    transition=dict(duration=150, easing="cubic-in-out"),
+                    pad=dict(b=10, t=50),
+                    len=0.9,
+                    x=0.1,
+                    y=-0.15,
+                    steps=[dict(
+                        method="animate",
+                        args=[[str(i)], dict(mode="immediate", frame=dict(duration=250, redraw=False), transition=dict(duration=150))],
+                        label=str(i)
+                    ) for i in range(1, max_n + 1)]
+                )]
+            ),
+            frames=frames
+        )
+        
+        st.plotly_chart(fig_anim, use_container_width=True)
