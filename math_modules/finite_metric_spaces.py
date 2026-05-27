@@ -21,7 +21,8 @@ def expand_sum_macro(formula_str: str, dim: int) -> str:
                 inner_expr = formula_str[start:j-1]
                 expanded = []
                 for k in range(1, dim + 1):
-                    term = inner_expr.replace("xi", f"x{k}").replace("yi", f"y{k}")
+                    term = inner_expr.replace("xi", f"x{k}").replace("yi", f"y{k}").replace("|", "Abs(")
+                    term = term.replace("Abs(x", "Abs(x").replace(")", ")") # simplified absolute handling
                     expanded.append(f"({term})")
                 res += "(" + " + ".join(expanded) + ")"
                 i = j
@@ -32,6 +33,8 @@ def expand_sum_macro(formula_str: str, dim: int) -> str:
 
 def _get_distance_formula(metric_name: str, custom_formula: str, dim: int) -> Tuple[Optional[Any], str]:
     if metric_name == "custom" and custom_formula:
+        import re
+        custom_formula = re.sub(r'\|([^|]+)\|', r'Abs(\1)', custom_formula)
         custom_formula = expand_sum_macro(custom_formula, dim)
         res = parse_expression(custom_formula)
         if res.is_valid:
@@ -48,7 +51,9 @@ def _get_distance_formula(metric_name: str, custom_formula: str, dim: int) -> Tu
     elif metric_name == "Chebyshev":
         return sympy.Max(*[sympy.Abs(x - y) for x, y in zip(x_vars, y_vars)]), "exact_and_numeric"
     elif metric_name == "Discrete":
-        return None, "discrete_special"
+        return sympy.Piecewise((0, sympy.And(*[sympy.Eq(x, y) for x, y in zip(x_vars, y_vars)])), (1, True)), "exact_and_numeric"
+    elif metric_name == "Hamming":
+        return sum(sympy.Piecewise((0, sympy.Eq(x, y)), (1, True)) for x, y in zip(x_vars, y_vars)), "exact_and_numeric"
     elif metric_name == "Minkowski":
         try:
             p_val = float(custom_formula)

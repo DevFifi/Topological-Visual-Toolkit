@@ -6,6 +6,7 @@ def render_math_keyboard():
         <button type="button" onmousedown="event.preventDefault(); insertSymbol('π')" style="font-size: 14px; padding: 4px 8px; margin: 2px; cursor: pointer; border-radius: 4px; border: 1px solid #ccc; background: white;">π</button>
         <button type="button" onmousedown="event.preventDefault(); insertSymbol('e')" style="font-size: 14px; padding: 4px 8px; margin: 2px; cursor: pointer; border-radius: 4px; border: 1px solid #ccc; background: white;">e</button>
         <button type="button" onmousedown="event.preventDefault(); insertSymbol('√()', 1)" style="font-size: 14px; padding: 4px 8px; margin: 2px; cursor: pointer; border-radius: 4px; border: 1px solid #ccc; background: white;">√</button>
+        <button type="button" onmousedown="event.preventDefault(); insertSymbol('root(,)', 2)" style="font-size: 14px; padding: 4px 8px; margin: 2px; cursor: pointer; border-radius: 4px; border: 1px solid #ccc; background: white;">root(x,n)</button>
         <button type="button" onmousedown="event.preventDefault(); insertSymbol('^')" style="font-size: 14px; padding: 4px 8px; margin: 2px; cursor: pointer; border-radius: 4px; border: 1px solid #ccc; background: white;">^</button>
         <button type="button" onmousedown="event.preventDefault(); insertSymbol('SUM()', 1)" style="font-size: 14px; padding: 4px 8px; margin: 2px; cursor: pointer; border-radius: 4px; border: 1px solid #ccc; background: white;">∑</button>
         <button type="button" onmousedown="event.preventDefault(); insertSymbol('Abs()', 1)" style="font-size: 14px; padding: 4px 8px; margin: 2px; cursor: pointer; border-radius: 4px; border: 1px solid #ccc; background: white;">|x|</button>
@@ -21,39 +22,58 @@ def render_math_keyboard():
     </div>
     
     <script>
+    let lastActiveInputIndex = -1;
+    let isTextArea = false;
+
+    document.addEventListener('focusin', function(e) {
+        if (e.target && e.target.tagName === 'INPUT') {
+            let inputs = Array.from(document.querySelectorAll('input'));
+            lastActiveInputIndex = inputs.indexOf(e.target);
+            isTextArea = false;
+        } else if (e.target && e.target.tagName === 'TEXTAREA') {
+            let textareas = Array.from(document.querySelectorAll('textarea'));
+            lastActiveInputIndex = textareas.indexOf(e.target);
+            isTextArea = true;
+        }
+    });
+
     function insertSymbol(symbol, backOffset = 0) {
+        if (lastActiveInputIndex === -1) {
+            console.log("Kliknij na pole tekstowe przed dodaniem symbolu.");
+            return;
+        }
         try {
-            // Skrypt działa bezpośrednio w środowisku Streamlit jako st.markdown
-            let activeEl = document.activeElement;
-            
-            if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA')) {
-                let start = activeEl.selectionStart;
-                let end = activeEl.selectionEnd;
-                let val = activeEl.value;
-                activeEl.value = val.substring(0, start) + symbol + val.substring(end);
-                
-                // Przestawienie kursora (np. w środek nawiasu)
-                let newPos = start + symbol.length - backOffset;
-                activeEl.selectionStart = activeEl.selectionEnd = newPos;
-                
-                // React tracker hook - wymagany by React w Streamlit zarejestrował zmianę z JS
-                let nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
-                if(activeEl.tagName === 'TEXTAREA') {
-                    nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, "value").set;
-                }
-                nativeInputValueSetter.call(activeEl, activeEl.value);
-                
-                let event = new Event('input', { bubbles: true });
-                activeEl.dispatchEvent(event);
-                
-                // Wymuś odświeżenie fokusu
-                setTimeout(() => {
-                    activeEl.focus();
-                    activeEl.setSelectionRange(newPos, newPos);
-                }, 10);
+            let activeEl;
+            if (isTextArea) {
+                let textareas = Array.from(document.querySelectorAll('textarea'));
+                activeEl = textareas[lastActiveInputIndex];
             } else {
-                console.log("Kliknij na pole tekstowe przed dodaniem symbolu.");
+                let inputs = Array.from(document.querySelectorAll('input'));
+                activeEl = inputs[lastActiveInputIndex];
             }
+            if (!activeEl) return;
+            
+            let start = activeEl.selectionStart;
+            let end = activeEl.selectionEnd;
+            let val = activeEl.value;
+            activeEl.value = val.substring(0, start) + symbol + val.substring(end);
+            
+            let newPos = start + symbol.length - backOffset;
+            activeEl.selectionStart = activeEl.selectionEnd = newPos;
+            
+            let nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
+            if(activeEl.tagName === 'TEXTAREA') {
+                nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, "value").set;
+            }
+            nativeInputValueSetter.call(activeEl, activeEl.value);
+            
+            activeEl.dispatchEvent(new Event('input', { bubbles: true }));
+            activeEl.dispatchEvent(new Event('change', { bubbles: true }));
+            
+            setTimeout(() => {
+                activeEl.focus();
+                activeEl.setSelectionRange(newPos, newPos);
+            }, 50);
         } catch (e) {
             console.log("Błąd wklejania:", e);
         }

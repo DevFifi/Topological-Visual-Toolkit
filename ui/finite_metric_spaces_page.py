@@ -1,14 +1,17 @@
 import streamlit as st
 import ast
-from typing import List, Optional
+from typing import List, Optional, Tuple
 from core.expression_parser import parse_expression
 from math_modules.finite_metric_spaces import compute_diam, compute_dist_sets, compute_distance_matrix, _get_distance_formula, compute_distance
 from ui.components import input_with_history, save_to_history_button, render_dual_value, render_distance_matrix_html
 from core.formatting import format_point
 
-def _parse_points(text: str, dim: int) -> list:
+def _parse_points(text: str, dim: int) -> Tuple[list, bool]:
     points = []
+    all_valid = True
     text = text.strip()
+    if not text:
+        return [], True
     if text.startswith("[") and text.endswith("]"):
         try:
             parsed = ast.literal_eval(text)
@@ -18,16 +21,18 @@ def _parse_points(text: str, dim: int) -> list:
                 if isinstance(p, (int, float)):
                     p = (p,)
                 elif not isinstance(p, (tuple, list)):
+                    all_valid = False
                     continue
                 res_p = []
                 for c in p:
                     res_c = parse_expression(str(c))
                     if res_c.is_valid:
                         res_p.append(res_c.expr)
-                if len(res_p) >= dim:
-                    points.append(tuple(res_p[:dim]))
-            if points:
-                return points
+                if len(res_p) == dim:
+                    points.append(tuple(res_p))
+                else:
+                    all_valid = False
+            return points, all_valid
         except Exception:
             pass
             
@@ -39,6 +44,8 @@ def _parse_points(text: str, dim: int) -> list:
             res_c = parse_expression(line)
             if res_c.is_valid:
                 points.append((res_c.expr,))
+            else:
+                all_valid = False
             continue
         if line.startswith("(") and line.endswith(")"):
             parts = line[1:-1].split(",")
@@ -47,9 +54,13 @@ def _parse_points(text: str, dim: int) -> list:
                 res_c = parse_expression(p.strip())
                 if res_c.is_valid:
                     res_p.append(res_c.expr)
-            if len(res_p) >= dim:
-                points.append(tuple(res_p[:dim]))
-    return points
+            if len(res_p) == dim:
+                points.append(tuple(res_p))
+            else:
+                all_valid = False
+        else:
+            all_valid = False
+    return points, all_valid
 
 def render() -> None:
     st.header("Skończone Przestrzenie Metryczne")
@@ -70,24 +81,34 @@ def render() -> None:
                     st.warning(f"Zmiana wymiaru z {old_dim} na {new_dim} obetnie punkty w zbiorach. Zatwierdź zmianę.")
                     if st.button("Zatwierdź zmianę wymiaru"):
                         if "points_e_input" in st.session_state:
-                            parsed_e = _parse_points(st.session_state["points_e_input"], old_dim)
+                            parsed_e, _ = _parse_points(st.session_state["points_e_input"], old_dim)
                             if parsed_e:
                                 st.session_state["points_e_input"] = "\n".join(format_point(tuple(p[:new_dim])) for p in parsed_e)
                         if "points_f_input" in st.session_state and st.session_state["points_f_input"]:
-                            parsed_f = _parse_points(st.session_state["points_f_input"], old_dim)
+                            parsed_f, _ = _parse_points(st.session_state["points_f_input"], old_dim)
                             if parsed_f:
                                 st.session_state["points_f_input"] = "\n".join(format_point(tuple(p[:new_dim])) for p in parsed_f)
                                 
                         st.session_state.metric_dim = new_dim
                         dim = new_dim
                 else:
+                    if "points_e_input" in st.session_state:
+                        parsed_e, _ = _parse_points(st.session_state["points_e_input"], old_dim)
+                        if parsed_e:
+                            st.session_state["points_e_input"] = "\n".join(format_point(tuple(list(p) + [0]*(new_dim - old_dim))) for p in parsed_e)
+                    if "points_f_input" in st.session_state and st.session_state["points_f_input"]:
+                        parsed_f, _ = _parse_points(st.session_state["points_f_input"], old_dim)
+                        if parsed_f:
+                            st.session_state["points_f_input"] = "\n".join(format_point(tuple(list(p) + [0]*(new_dim - old_dim))) for p in parsed_f)
+                            
                     st.session_state.metric_dim = new_dim
                     dim = new_dim
         
         with col2:
             metric = st.selectbox(
                 "Metryka",
-                ["Euclidean", "Manhattan", "Chebyshev", "Discrete", "Minkowski", "custom"]
+                ["Euclidean", "Manhattan", "Chebyshev", "Discrete", "Hamming", "Minkowski", "custom"],
+                key="metric_selectbox_state"
             )
             
     custom_formula = ""
@@ -131,11 +152,14 @@ def render() -> None:
         save_to_history_button("points", f_str, "Zbiór F")
         
     if st.button("Oblicz", type="primary"):
-        E = _parse_points(e_str, dim)
-        F = _parse_points(f_str, dim) if f_str else []
+        E, e_valid = _parse_points(e_str, dim)
+        F, f_valid = _parse_points(f_str, dim) if f_str else ([], True)
         
-        if not E:
-            st.error("Nie udało się poprawnie sparsować zbioru E. Upewnij się, że ma wymiar zgodny z 'n'.")
+        if not e_valid or not E:
+            st.error(f"Błąd w zbiorze E. Upewnij się, że masz wpisane punkty, a KAŻDY punkt ma dokładnie wymiar {dim} i poprawną składnię.")
+            return
+        if f_str and (not f_valid or not F):
+            st.error(f"Błąd w zbiorze F. Upewnij się, że KAŻDY punkt ma dokładnie wymiar {dim} i poprawną składnię.")
             return
             
         st.write("### Macierz odległości D(e_i, e_j)")

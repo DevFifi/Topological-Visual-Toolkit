@@ -18,7 +18,7 @@ def validate_metric_heuristically(formula: Any, metric_name: str, dim: int) -> T
             
             dxx = d(x, x)
             if abs(dxx) > 1e-6:
-                return False, f"Naruszenie identyczności: d(x,x) = {dxx:.5f} != 0."
+                return False, f"Naruszenie identyczności: d(x,x) = {dxx:.5f} != 0. (Zauważ, że jeśli np. wpisałeś d(x,y)=|x1-y2| to dla x=y d(x,x) = |x1-x2| co rzadko daje zero)"
                 
             dxy = d(x, y)
             if dxy < -1e-6:
@@ -31,7 +31,7 @@ def validate_metric_heuristically(formula: Any, metric_name: str, dim: int) -> T
             dyz = d(y, z)
             dxz = d(x, z)
             if dxz > dxy + dyz + 1e-5:
-                return False, f"Naruszenie nierówności trójkąta: d(x,z) = {dxz:.5f} > d(x,y) + d(y,z) = {dxy:.5f} + {dyz:.5f}."
+                return False, f"Naruszenie nierówności trójkąta: d(x,z) = {dxz:.5f} > d(x,y) + d(y,z) = {dxy:.5f} + {dyz:.5f}. (Przypominamy: np. suma kwadratów różnic nie spełnia tej nierówności!)"
                 
         return True, "Wzór wydaje się być poprawną metryką (sprawdzono heurystycznie setki losowych przypadków), jednak brak dowodu analitycznego."
         

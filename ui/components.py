@@ -57,6 +57,11 @@ def render_distance_matrix_html(headers: List[str], matrix: List[List['DualValue
     html += "</table></div>"
     st.markdown(html, unsafe_allow_html=True)
 
+def history_change_callback(key):
+    selected = st.session_state[f"{key}_history"]
+    if selected != "-- Wpisz ręcznie --":
+        st.session_state[f"{key}_input"] = selected
+
 def input_with_history(
     label: str,
     history_category: str,
@@ -67,15 +72,14 @@ def input_with_history(
     history = get_history(history_category)
     options = ["-- Wpisz ręcznie --"] + [h["raw_value"] for h in history]
     
-    selected = st.selectbox(f"Historia: {label}", options, key=f"{key}_history")
+    st.selectbox(f"Historia: {label}", options, key=f"{key}_history", on_change=history_change_callback, args=(key,))
     
-    if selected != "-- Wpisz ręcznie --":
-        default_val = selected
+    current_val = st.session_state.get(f"{key}_input", default_val)
         
     if multiline:
-        val = st.text_area(label, value=default_val, key=f"{key}_input", height=100)
+        val = st.text_area(label, value=current_val, key=f"{key}_input", height=100)
     else:
-        val = st.text_input(label, value=default_val, key=f"{key}_input")
+        val = st.text_input(label, value=current_val, key=f"{key}_input")
         
     return val
 
