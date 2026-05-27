@@ -27,6 +27,7 @@ def _create_namespace() -> Dict[str, Any]:
         "Max": sympy.Max,
         "Sum": sympy.Sum,
         "root": sympy.root,
+        "oo": sympy.oo,
         "i": sympy.Symbol("i", integer=True),
         "Piecewise": sympy.Piecewise,
         "x": sympy.Symbol("x", real=True),
