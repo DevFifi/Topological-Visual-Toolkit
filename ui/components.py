@@ -83,8 +83,8 @@ def input_with_history(
         
     return val
 
-def save_to_history_button(category: str, val: str, label: str = "") -> None:
-    if st.button("Zapisz do historii", key=f"save_hist_{category}_{val}"):
+def save_to_history_button(category: str, val: str, label: str = "", key_suffix: str = "") -> None:
+    if st.button("Zapisz do historii", key=f"save_hist_{category}_{val}_{key_suffix}"):
         if val.strip():
             add_or_update_history_entry(category, val, label)
             st.success("Zapisano!")

@@ -13,19 +13,19 @@ def render() -> None:
     col1, col2 = st.columns(2)
     with col1:
         phi1_str = input_with_history("Φ_1(x, y)", "functions_2d", "vec_phi1", default_val="x")
-        save_to_history_button("functions_2d", phi1_str, "Φ_1")
+        save_to_history_button("functions_2d", phi1_str, "Φ_1", key_suffix="phi1")
     with col2:
         phi2_str = input_with_history("Φ_2(x, y)", "functions_2d", "vec_phi2", default_val="y")
-        save_to_history_button("functions_2d", phi2_str, "Φ_2")
+        save_to_history_button("functions_2d", phi2_str, "Φ_2", key_suffix="phi2")
         
     st.subheader("Zbiory")
     col3, col4 = st.columns(2)
     with col3:
         c_str = input_with_history("Zbiór C ⊆ R² (do obrazu)", "sets_r2", "vec_c", default_val="(x^2+y^2-1)^3 - x^2*y^3 < 0")
-        save_to_history_button("sets_r2", c_str, "Zbiór C")
+        save_to_history_button("sets_r2", c_str, "Zbiór C", key_suffix="C")
     with col4:
         b_str = input_with_history("Zbiór B ⊆ R² (do przeciwobrazu)", "sets_r2", "vec_b", default_val="(x^2+y^2-1)^3 - x^2*y^3 < 0")
-        save_to_history_button("sets_r2", b_str, "Zbiór B")
+        save_to_history_button("sets_r2", b_str, "Zbiór B", key_suffix="B")
         
     st.subheader("Ustawienia Widoku Źródłowego (x, y)")
     col5, col6, col7, col8 = st.columns(4)
