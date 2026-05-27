@@ -52,55 +52,50 @@ transition: all 0.15s ease; box-shadow: 0 1px 2px rgba(0,0,0,0.05); font-family:
 </div>
 </div>
 <script>
-let lastActiveInput = null;
+if (!window._mathKeyboardInitialized) {
+window._mathKeyboardInitialized = true;
+window._lastActiveInput = null;
 function trackInput(e) {
 if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) {
-lastActiveInput = e.target;
+window._lastActiveInput = e.target;
 }
 }
 window.addEventListener('mousedown', trackInput, true);
-window.addEventListener('pointerdown', trackInput, true);
-window.addEventListener('touchstart', trackInput, true);
 window.addEventListener('focusin', trackInput, true);
-function bindButtons() {
-let btns = document.querySelectorAll('#math-keyboard .mk-btn');
-btns.forEach(btn => {
-let handler = function(e) {
+window.addEventListener('touchstart', trackInput, true);
+function interceptPointer(e) {
+if (e.target && e.target.classList && e.target.classList.contains('mk-btn')) {
 e.preventDefault();
 e.stopPropagation();
-let symbol = btn.getAttribute('data-sym');
-let backOffset = parseInt(btn.getAttribute('data-off') || '0');
-if (!lastActiveInput) {
-console.log("Kliknij najpierw na pole tekstowe.");
-return;
-}
-try {
-let activeEl = lastActiveInput;
+let symbol = e.target.getAttribute('data-sym');
+let backOffset = parseInt(e.target.getAttribute('data-off') || '0');
+if (!window._lastActiveInput) return;
+let activeEl = window._lastActiveInput;
+activeEl.focus();
+let success = document.execCommand('insertText', false, symbol);
+if (!success) {
 let start = activeEl.selectionStart || 0;
 let end = activeEl.selectionEnd || 0;
 let val = activeEl.value || "";
 let newVal = val.substring(0, start) + symbol + val.substring(end);
-let newPos = start + symbol.length - backOffset;
 let nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
 if(activeEl.tagName === 'TEXTAREA') {
 nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, "value").set;
 }
 nativeInputValueSetter.call(activeEl, newVal);
 activeEl.dispatchEvent(new Event('input', { bubbles: true }));
-activeEl.dispatchEvent(new Event('change', { bubbles: true }));
-setTimeout(() => {
-activeEl.focus();
+let newPos = start + symbol.length;
 activeEl.setSelectionRange(newPos, newPos);
-}, 10);
-} catch (err) {
-console.log("Błąd wklejania:", err);
 }
-};
-btn.addEventListener('mousedown', handler, {capture: true});
-btn.addEventListener('pointerdown', handler, {capture: true});
-btn.addEventListener('touchstart', handler, {capture: true});
-});
+if (backOffset > 0) {
+let pos = activeEl.selectionStart - backOffset;
+activeEl.setSelectionRange(pos, pos);
 }
-bindButtons();
+}
+}
+window.addEventListener('mousedown', interceptPointer, true);
+window.addEventListener('pointerdown', interceptPointer, true);
+window.addEventListener('touchstart', interceptPointer, true);
+}
 </script>"""
     st.markdown(html_code, unsafe_allow_html=True)
