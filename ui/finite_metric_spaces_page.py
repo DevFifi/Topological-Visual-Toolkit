@@ -244,13 +244,13 @@ def _parse_points(text: str, dim: int, strict: bool = True) -> Tuple[list, bool]
 
 def _save_valid_inputs(metric: str, custom_formula: str, e_str: str, f_str: str) -> None:
     metric = normalize_metric_name(metric)
-    add_or_update_history_entry("points", e_str.strip(), "Zbiór E")
+    add_or_update_history_entry("metric_points", e_str.strip(), "E")
     if f_str.strip():
-        add_or_update_history_entry("points", f_str.strip(), "Zbiór F")
+        add_or_update_history_entry("metric_points", f_str.strip(), "F")
     if metric == "custom" and custom_formula.strip():
-        add_or_update_history_entry("custom_metrics", custom_formula.strip(), "Metryka własna")
+        add_or_update_history_entry("metric_custom_metrics", custom_formula.strip())
     if metric == "Minkowski" and custom_formula.strip():
-        add_or_update_history_entry("metrics", custom_formula.strip(), "Parametr Minkowskiego")
+        add_or_update_history_entry("metric_params", custom_formula.strip())
 
 
 def render() -> None:
@@ -296,7 +296,7 @@ def render() -> None:
         st.caption("Użyj zmiennych x1...xn, y1...yn albo skrótu SUM(...), np. SUM(|xi-yi|).")
         custom_formula = math_input(
             "φ(x,y) =",
-            "custom_metrics",
+            "metric_custom_metrics",
             "custom_metric",
             default_val="SUM(|xi-yi|)",
             preview=False,
@@ -310,7 +310,7 @@ def render() -> None:
                 is_valid, msg = validate_metric_heuristically(formula, "custom", dim)
                 (st.success if is_valid else st.warning)(msg)
     elif metric_internal == "Minkowski":
-        custom_formula = math_input("Parametr p", "metrics", "minkowski_p", default_val="2", preview=True, preview_prefix_latex="p = ")
+        custom_formula = math_input("Parametr p", "metric_params", "minkowski_p", default_val="2", preview=True, preview_prefix_latex="p = ")
         p_res = parse_expression(custom_formula)
         if p_res.is_valid:
             try:
@@ -331,7 +331,7 @@ def render() -> None:
 
     st.subheader("Zbiór E")
     e_default = _default_points_text(dim)
-    e_str = input_with_history("Punkty zbioru E", "points", "points_e", default_val=e_default, multiline=True)
+    e_str = input_with_history("Punkty zbioru E", "metric_points", "points_e", default_val=e_default, multiline=True)
     parsed_e_preview, e_preview_valid = _parse_points(e_str, dim)
     if e_preview_valid and parsed_e_preview:
         st.caption(f"Rozpoznano {len(parsed_e_preview)} punktów w R^{dim}.")
@@ -343,7 +343,7 @@ def render() -> None:
             st.caption(f"Rozpoznano zapis zbiorowy E w R^{dim}: {len(e_set_preview.boxes)} składnik(ów) pudełkowych.")
 
     st.subheader("Zbiór F")
-    f_str = input_with_history("Punkty zbioru F (opcjonalnie)", "points", "points_f", multiline=True)
+    f_str = input_with_history("Punkty zbioru F (opcjonalnie)", "metric_points", "points_f", multiline=True)
     parsed_f_preview, f_preview_valid = _parse_points(f_str, dim) if f_str.strip() else ([], True)
     if f_preview_valid and parsed_f_preview:
         st.caption(f"Rozpoznano {len(parsed_f_preview)} punktów w R^{dim}.")

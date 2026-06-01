@@ -14,9 +14,9 @@ def render() -> None:
 
     col1, col2 = st.columns(2)
     with col1:
-        f_str = math_input("Funkcja f(x, y)", "functions_2d", "sup_rect_f", default_val="x^2 + y^2", preview_prefix_latex="f(x,y) = ")
+        f_str = math_input("Funkcja f(x, y)", "supremum_rectangle_functions", "sup_rect_f", default_val="x^2 + y^2", preview_prefix_latex="f(x,y) = ")
     with col2:
-        g_str = math_input("Funkcja g(x, y)", "functions_2d", "sup_rect_g", default_val="0", preview_prefix_latex="g(x,y) = ")
+        g_str = math_input("Funkcja g(x, y)", "supremum_rectangle_functions", "sup_rect_g", default_val="0", preview_prefix_latex="g(x,y) = ")
 
     col3, col4, col5, col6, col7 = st.columns([1, 1, 1, 1, 1])
     with col3:
@@ -44,8 +44,8 @@ def render() -> None:
             st.error(f"Niepoprawna funkcja g: {g_res.error}")
             return
 
-        add_or_update_history_entry("functions_2d", f_str.strip(), "f(x,y)")
-        add_or_update_history_entry("functions_2d", g_str.strip(), "g(x,y)")
+        add_or_update_history_entry("supremum_rectangle_functions", f_str.strip())
+        add_or_update_history_entry("supremum_rectangle_functions", g_str.strip())
 
         dv, maximizers, f_num, g_num, h_num = compute_supremum_rectangle(
             f_res.expr,

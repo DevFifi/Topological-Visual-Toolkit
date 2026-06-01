@@ -14,9 +14,9 @@ def render() -> None:
 
     col1, col2 = st.columns(2)
     with col1:
-        f_str = math_input("Funkcja f(x)", "functions_1d", "sup_int_f", default_val="x^2", preview_prefix_latex="f(x) = ")
+        f_str = math_input("Funkcja f(x)", "supremum_interval_functions", "sup_int_f", default_val="x^2", preview_prefix_latex="f(x) = ")
     with col2:
-        g_str = math_input("Funkcja g(x)", "functions_1d", "sup_int_g", default_val="x", preview_prefix_latex="g(x) = ")
+        g_str = math_input("Funkcja g(x)", "supremum_interval_functions", "sup_int_g", default_val="x", preview_prefix_latex="g(x) = ")
 
     col3, col4, col5 = st.columns([1, 1, 1])
     with col3:
@@ -40,8 +40,8 @@ def render() -> None:
             st.error(f"Niepoprawna funkcja g: {g_res.error}")
             return
 
-        add_or_update_history_entry("functions_1d", f_str.strip(), "f(x)")
-        add_or_update_history_entry("functions_1d", g_str.strip(), "g(x)")
+        add_or_update_history_entry("supremum_interval_functions", f_str.strip())
+        add_or_update_history_entry("supremum_interval_functions", g_str.strip())
 
         dv, maximizers, f_num, g_num, h_num = compute_supremum_interval(
             f_res.expr,

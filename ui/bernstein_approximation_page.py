@@ -29,7 +29,7 @@ def render() -> None:
     st.header("Aproksymacja Bernsteina")
     st.caption("Porównanie funkcji f : [0,1] -> R z wielomianem Bernsteina B_n(f).")
 
-    f_str = math_input("Funkcja f(x)", "functions_1d", "bernstein_f", default_val="x^2", preview_prefix_latex="f(x) = ")
+    f_str = math_input("Funkcja f(x)", "bernstein_functions", "bernstein_f", default_val="x^2", preview_prefix_latex="f(x) = ")
 
     col1, col2, col3 = st.columns(3)
     with col1:
@@ -53,7 +53,7 @@ def render() -> None:
             st.error(f"Niepoprawna funkcja: {f_res.error}")
             return
 
-        add_or_update_history_entry("functions_1d", f_str.strip(), "f(x)")
+        add_or_update_history_entry("bernstein_functions", f_str.strip())
         exact_b_n, b_num = compute_bernstein_polynomial(f_res.expr, int(n))
 
         st.write("### Wielomian Bernsteina")

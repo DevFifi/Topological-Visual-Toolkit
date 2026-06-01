@@ -5,11 +5,65 @@ import sympy
 
 from core.expression_parser import parse_expression
 from core.formatting import latex_point
-from core.history import add_or_update_history_entry
+from core.history import add_or_update_history_entry, get_history, remove_history_entry
 from core.safe_eval import create_numpy_func_2d
-from core.set_parser import FiniteSet1D, Interval1D, parse_set_1d, set_latex
+from core.set_parser import FiniteSet1D, Interval1D, parse_set_1d, set_latex, split_top_level
 from math_modules.scalar_preimage import compute_scalar_preimage_membership
 from ui.components import input_with_history, math_input, render_dual_value
+
+
+def _parse_point_pair_text(text: str):
+    cleaned = str(text).strip()
+    if cleaned.startswith("(") and cleaned.endswith(")"):
+        cleaned = cleaned[1:-1].strip()
+    parts = split_top_level(cleaned)
+    if len(parts) != 2:
+        return None
+    return parts[0].strip(), parts[1].strip()
+
+
+def _point_pair_input() -> tuple[str, str]:
+    entries = get_history("scalar_preimage_points")
+    options = [None] + [entry["id"] for entry in entries]
+    entry_by_id = {entry["id"]: entry for entry in entries}
+
+    def format_option(entry_id):
+        if entry_id is None:
+            return "Wpisz ręcznie"
+        raw = str(entry_by_id[entry_id]["raw_value"]).strip().splitlines()[0]
+        return raw if len(raw) <= 90 else raw[:87] + "..."
+
+    selected_id = st.selectbox("Historia: punkt P", options, format_func=format_option, key="preimg_point_history")
+    if selected_id is not None:
+        selected_raw = entry_by_id[selected_id]["raw_value"]
+        applied_key = "preimg_point_history_applied"
+        if st.session_state.get(applied_key) != selected_id:
+            parsed = _parse_point_pair_text(selected_raw)
+            if parsed is not None:
+                st.session_state["preimg_x0_input"] = parsed[0]
+                st.session_state["preimg_y0_input"] = parsed[1]
+            st.session_state[applied_key] = selected_id
+        if st.button("Usuń wybrany wpis", key="preimg_point_delete_history"):
+            remove_history_entry("scalar_preimage_points", selected_id)
+            st.session_state.pop(applied_key, None)
+            st.rerun()
+
+    st.markdown("**P = (**")
+    col_x, col_y = st.columns(2)
+    with col_x:
+        x0_str = st.text_input("x₀", value=st.session_state.get("preimg_x0_input", "0.5"), key="preimg_x0_input")
+    with col_y:
+        y0_str = st.text_input("y₀", value=st.session_state.get("preimg_y0_input", "0.5"), key="preimg_y0_input")
+    st.markdown("**)**")
+
+    x_res = parse_expression(x0_str)
+    y_res = parse_expression(y0_str)
+    if x_res.is_valid and y_res.is_valid:
+        st.caption("Podgląd punktu")
+        st.latex("P = " + latex_point((x_res.expr, y_res.expr)))
+    elif x0_str.strip() or y0_str.strip():
+        st.caption("Współrzędne punktu muszą być poprawnymi wyrażeniami.")
+    return x0_str, y0_str
 
 
 def _mask_values_1d(parsed_set, values: np.ndarray, tolerance: float) -> np.ndarray:
@@ -43,20 +97,16 @@ def render() -> None:
 
     col1, col2 = st.columns(2)
     with col1:
-        f_str = math_input("Funkcja f(x, y)", "functions_2d", "preimg_f", default_val="x^2 + y^2", preview_prefix_latex="f(x,y) = ")
+        f_str = math_input("Funkcja f(x, y)", "scalar_preimage_functions", "preimg_f", default_val="x^2 + y^2", preview_prefix_latex="f(x,y) = ")
     with col2:
-        a_str = input_with_history("Zbiór A ⊆ R, np. [0, 1], (-oo, 0), {0, 1}", "sets_r", "preimg_a", default_val="[0, 1]")
+        a_str = input_with_history("Zbiór A ⊆ R, np. [0, 1], (-oo, 0), {0, 1}", "scalar_preimage_sets_r", "preimg_a", default_val="[0, 1]")
         a_preview = parse_set_1d(a_str)
         if a_preview:
             st.caption("Podgląd zbioru")
             st.latex(set_latex(a_preview, "A"))
 
     st.subheader("Badany punkt")
-    col3, col4 = st.columns(2)
-    with col3:
-        x0_str = math_input("x0", "points", "preimg_x0", default_val="0.5", preview=True, preview_prefix_latex="x_0 = ")
-    with col4:
-        y0_str = math_input("y0", "points", "preimg_y0", default_val="0.5", preview=True, preview_prefix_latex="y_0 = ")
+    x0_str, y0_str = _point_pair_input()
 
     st.subheader("Okno rysunku")
     col5, col6, col7, col8 = st.columns(4)
@@ -106,9 +156,9 @@ def render() -> None:
             st.error("Współrzędne punktu muszą być liczbami rzeczywistymi.")
             return
 
-        add_or_update_history_entry("functions_2d", f_str.strip(), "f(x,y)")
-        add_or_update_history_entry("sets_r", a_str.strip(), "Zbiór A")
-        add_or_update_history_entry("points", f"({x0_str.strip()}, {y0_str.strip()})", "Punkt")
+        add_or_update_history_entry("scalar_preimage_functions", f_str.strip())
+        add_or_update_history_entry("scalar_preimage_sets_r", a_str.strip())
+        add_or_update_history_entry("scalar_preimage_points", f"({x0_str.strip()}, {y0_str.strip()})")
 
         mem_status, dv = compute_scalar_preimage_membership(f_res.expr, a_set, (x0_res.expr, y0_res.expr))
 

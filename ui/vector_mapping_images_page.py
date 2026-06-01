@@ -16,6 +16,13 @@ from math_modules.vector_mapping_images import (
 from ui.components import input_with_history, math_input
 
 
+MAX_VECTOR_GRID_RESOLUTION = 900
+DEFAULT_VECTOR_GRID_RESOLUTION = 600
+MAX_COMPOSITE_GRID_RESOLUTION = 750
+MAX_BOUNDARY_RESOLUTION = 620
+MAX_SCATTER_IMAGE_RESOLUTION = 520
+
+
 def _is_identity_mapping(phi1_expr, phi2_expr) -> bool:
     x = sympy.Symbol("x", real=True)
     y = sympy.Symbol("y", real=True)
@@ -23,6 +30,12 @@ def _is_identity_mapping(phi1_expr, phi2_expr) -> bool:
         return sympy.simplify(phi1_expr - x) == 0 and sympy.simplify(phi2_expr - y) == 0
     except Exception:
         return False
+
+
+def _effective_grid_resolution(requested_resolution: int, *sets) -> int:
+    if any(isinstance(parsed_set, CompositeSet) for parsed_set in sets):
+        return min(int(requested_resolution), MAX_COMPOSITE_GRID_RESOLUTION)
+    return min(int(requested_resolution), MAX_VECTOR_GRID_RESOLUTION)
 
 
 def _add_relation_region(
@@ -64,12 +77,13 @@ def _add_relation_region(
                 x=x_vals,
                 y=y_vals,
                 contours=dict(start=0.5, end=1.5, size=1, coloring="fill", showlines=False),
-                colorscale=[[0, "rgba(255,255,255,0)"], [1, color]],
-                opacity=0.52,
-                showscale=False,
-                hoverinfo="skip",
-                name=name,
-            )
+                        colorscale=[[0, "rgba(255,255,255,0)"], [1, color]],
+                        opacity=0.52,
+                        showscale=False,
+                        hoverinfo="skip",
+                        line_smoothing=0.95,
+                        name=name,
+                    )
         )
         added = True
 
@@ -178,20 +192,20 @@ def render() -> None:
 
     col1, col2 = st.columns(2)
     with col1:
-        phi1_str = math_input("Φ₁(x, y)", "functions_2d", "vec_phi1", default_val="x", preview_prefix_latex="\\Phi_1(x,y) = ")
+        phi1_str = math_input("Φ₁(x, y)", "vector_mapping_functions", "vec_phi1", default_val="x", preview_prefix_latex="\\Phi_1(x,y) = ")
     with col2:
-        phi2_str = math_input("Φ₂(x, y)", "functions_2d", "vec_phi2", default_val="y", preview_prefix_latex="\\Phi_2(x,y) = ")
+        phi2_str = math_input("Φ₂(x, y)", "vector_mapping_functions", "vec_phi2", default_val="y", preview_prefix_latex="\\Phi_2(x,y) = ")
 
     st.subheader("Zbiory")
     col3, col4 = st.columns(2)
     with col3:
-        c_str = input_with_history("Zbiór C ⊆ R² (do obrazu)", "sets_r2", "vec_c", default_val="x^2 + y^2 <= 1")
+        c_str = input_with_history("Zbiór C ⊆ R² (do obrazu)", "vector_mapping_sets_r2", "vec_c", default_val="x^2 + y^2 <= 1")
         c_preview = parse_set_2d(c_str)
         if c_preview:
             st.caption("Podgląd C")
             st.latex(set_latex(c_preview, "C"))
     with col4:
-        b_str = input_with_history("Zbiór B ⊆ R² (do przeciwobrazu)", "sets_r2", "vec_b", default_val="u^2 + v^2 <= 1")
+        b_str = input_with_history("Zbiór B ⊆ R² (do przeciwobrazu)", "vector_mapping_sets_r2", "vec_b", default_val="u^2 + v^2 <= 1")
         b_preview = parse_set_2d(b_str)
         if b_preview:
             st.caption("Podgląd B")
@@ -211,8 +225,8 @@ def render() -> None:
     quality_resolution = st.slider(
         "Jakość rysowania (liczba próbek na oś)",
         min_value=250,
-        max_value=2200,
-        value=850,
+        max_value=MAX_VECTOR_GRID_RESOLUTION,
+        value=DEFAULT_VECTOR_GRID_RESOLUTION,
         step=50,
         help="Większa wartość daje gładsze brzegi i mniej dziur, ale obliczenia trwają dłużej.",
     )
@@ -240,16 +254,16 @@ def render() -> None:
             st.error("Niepoprawny zbiór B. Można używać zmiennych x,y albo u,v.")
             return
 
-        add_or_update_history_entry("functions_2d", phi1_str.strip(), "Φ₁")
-        add_or_update_history_entry("functions_2d", phi2_str.strip(), "Φ₂")
-        add_or_update_history_entry("sets_r2", c_str.strip(), "Zbiór C")
-        add_or_update_history_entry("sets_r2", b_str.strip(), "Zbiór B")
+        add_or_update_history_entry("vector_mapping_functions", phi1_str.strip())
+        add_or_update_history_entry("vector_mapping_functions", phi2_str.strip())
+        add_or_update_history_entry("vector_mapping_sets_r2", c_str.strip())
+        add_or_update_history_entry("vector_mapping_sets_r2", b_str.strip())
 
         source_bounds = ((float(a), float(b)), (float(c), float(d)))
         plot_col1, plot_col2 = st.columns(2)
 
-        image_resolution = int(quality_resolution)
-        boundary_resolution = min(2200, max(520, image_resolution))
+        image_resolution = _effective_grid_resolution(int(quality_resolution), c_set, b_set)
+        boundary_resolution = min(MAX_BOUNDARY_RESOLUTION, max(360, int(image_resolution * 0.75)))
         with plot_col1:
             st.write("### Obraz Φ(C)")
             fig_img = go.Figure()
@@ -270,13 +284,21 @@ def render() -> None:
                         colorscale=[[0, "rgba(255,255,255,0)"], [1, "#1f5f9f"]],
                         showscale=False,
                         hoverinfo="skip",
-                        line_smoothing=0.85,
+                        line_smoothing=0.95,
                         name="Φ(C)",
                     )
                 )
                 _add_source_boundaries(fig_img, c_set, source_bounds, "#1f5f9f", "brzeg Φ(C)", boundary_resolution)
             else:
-                u_list, v_list = compute_image_points(phi1_res.expr, phi2_res.expr, c_set, source_bounds, resolution=min(image_resolution, 1300))
+                scatter_resolution = min(image_resolution, MAX_SCATTER_IMAGE_RESOLUTION)
+                u_list, v_list = compute_image_points(
+                    phi1_res.expr,
+                    phi2_res.expr,
+                    c_set,
+                    source_bounds,
+                    resolution=scatter_resolution,
+                    max_points=120_000,
+                )
                 if not u_list:
                     st.info("W wybranym oknie i rozdzielczości nie znaleziono punktów zbioru C.")
                 fig_img.add_trace(
@@ -323,7 +345,7 @@ def render() -> None:
                         colorscale=[[0, "rgba(255,255,255,0)"], [1, "#a8d8b9"]],
                         showscale=False,
                         hoverinfo="skip",
-                        line_smoothing=0.85,
+                        line_smoothing=0.95,
                         name="Φ⁻¹(B)",
                     )
                 )

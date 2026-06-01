@@ -42,7 +42,11 @@ with st.sidebar.expander("Klawiatura matematyczna", expanded=False):
 with st.sidebar.expander("Stan aplikacji", expanded=False):
     st.caption("Przywraca domyślną pamięć przykładów i czyści bieżące pola formularzy.")
     if st.button("Przywróć stan początkowy", type="secondary"):
-        reset_state_from_draft()
+        try:
+            reset_state_from_draft()
+        except Exception as exc:
+            st.sidebar.error(f"Nie udało się przywrócić stanu początkowego: {exc}")
+            st.stop()
         st.cache_data.clear()
         st.cache_resource.clear()
         for key in list(st.session_state.keys()):

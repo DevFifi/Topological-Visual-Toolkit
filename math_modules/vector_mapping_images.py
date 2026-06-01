@@ -128,9 +128,16 @@ def compute_image_points(
     source_set: ParsedSet,
     source_bounds: Tuple[Tuple[float, float], Tuple[float, float]],
     resolution: int = 100,
+    max_points: int = 120_000,
 ) -> Tuple[List[float], List[float]]:
     X, Y, U, V = sample_vector_mapping(phi1_expr, phi2_expr, source_bounds, resolution)
     width = max(abs(source_bounds[0][1] - source_bounds[0][0]), abs(source_bounds[1][1] - source_bounds[1][0]))
     tolerance = max(1e-9, width / max(1, resolution) * 0.5)
     mask = set_mask(source_set, X, Y, tolerance=tolerance) & np.isfinite(U) & np.isfinite(V)
-    return U[mask].astype(float).tolist(), V[mask].astype(float).tolist()
+    u_values = U[mask].astype(float)
+    v_values = V[mask].astype(float)
+    if max_points > 0 and u_values.size > max_points:
+        step = int(np.ceil(u_values.size / max_points))
+        u_values = u_values[::step]
+        v_values = v_values[::step]
+    return u_values.tolist(), v_values.tolist()

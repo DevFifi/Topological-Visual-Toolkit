@@ -119,6 +119,15 @@ def test_compute_image_points_for_non_identity_mapping():
     assert max(u) <= 2.0
 
 
+def test_compute_image_points_subsamples_large_scatter_output():
+    x = sympy.Symbol("x", real=True)
+    y = sympy.Symbol("y", real=True)
+    c_set = parse_set_2d("x^2 + y^2 <= 2")
+    u, v = compute_image_points(x, y, c_set, ((-1.0, 1.0), (-1.0, 1.0)), 80, max_points=500)
+    assert len(u) == len(v)
+    assert 0 < len(u) <= 500
+
+
 def test_preimage_rejects_points_where_mapping_is_not_finite():
     x = sympy.Symbol("x", real=True)
     y = sympy.Symbol("y", real=True)

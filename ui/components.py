@@ -269,13 +269,10 @@ def math_input(
             return "Wpisz ręcznie"
         raw = entry_by_id[entry_id]["raw_value"]
         label_text = entry_by_id[entry_id].get("label", "").strip()
-        if history_category == "points":
+        if history_category == "metric_points":
             return _format_point_history_option(label_text, raw)
-        stats = ""
         first_line = str(raw).strip().splitlines()[0] if str(raw).strip() else ""
-        preview = first_line if len(first_line) <= 54 else first_line[:51] + "..."
-        parts = [part for part in (label_text, stats, preview) if part]
-        result = " - ".join(parts) if parts else str(raw)
+        result = first_line if len(first_line) <= 90 else first_line[:87] + "..."
         return result if len(result) <= 90 else result[:87] + "..."
 
     selected_id = st.selectbox(

@@ -1,17 +1,29 @@
 import json
 import os
+import shutil
 from copy import deepcopy
 from typing import Dict, Any
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 APP_STATE_PATH = os.path.join(PROJECT_ROOT, "data", "app_state.json")
 APP_STATE_DRAFT_PATH = os.path.join(PROJECT_ROOT, "data", "app_state_draft.json")
-DRAFT_SEED_VERSION = 4
+DRAFT_SEED_VERSION = 5
 DRAFT_SEED_SETTING = "_draft_seed_version"
 
 DEFAULT_STATE: Dict[str, Any] = {
     "functions_1d": [],
     "functions_2d": [],
+    "supremum_interval_functions": [],
+    "supremum_rectangle_functions": [],
+    "bernstein_functions": [],
+    "scalar_preimage_functions": [],
+    "scalar_preimage_sets_r": [],
+    "scalar_preimage_points": [],
+    "vector_mapping_functions": [],
+    "vector_mapping_sets_r2": [],
+    "metric_points": [],
+    "metric_params": [],
+    "metric_custom_metrics": [],
     "vector_mappings_r2_r2": [],
     "metrics": [],
     "custom_metrics": [],
@@ -43,15 +55,36 @@ def _default_state_copy() -> Dict[str, Any]:
 
 
 def _read_json_file(path: str) -> Dict[str, Any]:
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, "r", encoding="utf-8-sig") as f:
         return json.load(f)
 
 
+def _draft_path_candidates() -> list[str]:
+    return [
+        APP_STATE_DRAFT_PATH,
+        os.path.join(PROJECT_ROOT, "data", "app_state_draft.json"),
+        os.path.join(os.getcwd(), "data", "app_state_draft.json"),
+    ]
+
+
+def _find_existing_draft_path() -> str | None:
+    seen = set()
+    for path in _draft_path_candidates():
+        normalized = os.path.abspath(path)
+        if normalized in seen:
+            continue
+        seen.add(normalized)
+        if os.path.exists(normalized):
+            return normalized
+    return None
+
+
 def _load_draft_state() -> Dict[str, Any]:
-    if not os.path.exists(APP_STATE_DRAFT_PATH):
+    draft_path = _find_existing_draft_path()
+    if draft_path is None:
         return _default_state_copy()
     try:
-        draft = _read_json_file(APP_STATE_DRAFT_PATH)
+        draft = _read_json_file(draft_path)
     except (json.JSONDecodeError, IOError):
         return _default_state_copy()
     return _ensure_default_keys(draft)
@@ -160,11 +193,9 @@ def save_state(state: Dict[str, Any]) -> None:
 
 def reset_state_from_draft() -> None:
     ensure_data_dir_exists()
-    if not os.path.exists(APP_STATE_DRAFT_PATH):
-        state = _default_state_copy()
-        _mark_draft_seeded(state)
-        save_state(state)
-        return
-    state = _load_draft_state()
-    _mark_draft_seeded(state)
-    save_state(state)
+    draft_path = _find_existing_draft_path()
+    if draft_path is None:
+        searched = ", ".join(os.path.abspath(path) for path in _draft_path_candidates())
+        raise FileNotFoundError(f"Nie znaleziono app_state_draft.json. Sprawdzone ścieżki: {searched}")
+    _read_json_file(draft_path)
+    shutil.copyfile(draft_path, APP_STATE_PATH)
