@@ -1,10 +1,12 @@
 import json
 import os
-import shutil
+from copy import deepcopy
 from typing import Dict, Any
 
 APP_STATE_PATH = os.path.join("data", "app_state.json")
 APP_STATE_DRAFT_PATH = os.path.join("data", "app_state_draft.json")
+DRAFT_SEED_VERSION = 1
+DRAFT_SEED_SETTING = "_draft_seed_version"
 
 DEFAULT_STATE: Dict[str, Any] = {
     "functions_1d": [],
@@ -34,19 +36,110 @@ def ensure_data_dir_exists() -> None:
     if not os.path.exists(data_dir):
         os.makedirs(data_dir, exist_ok=True)
 
+
+def _default_state_copy() -> Dict[str, Any]:
+    return deepcopy(DEFAULT_STATE)
+
+
+def _read_json_file(path: str) -> Dict[str, Any]:
+    with open(path, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def _load_draft_state() -> Dict[str, Any]:
+    if not os.path.exists(APP_STATE_DRAFT_PATH):
+        return _default_state_copy()
+    try:
+        draft = _read_json_file(APP_STATE_DRAFT_PATH)
+    except (json.JSONDecodeError, IOError):
+        return _default_state_copy()
+    return _ensure_default_keys(draft)
+
+
+def _ensure_default_keys(state: Dict[str, Any]) -> Dict[str, Any]:
+    for key, value in DEFAULT_STATE.items():
+        if key not in state:
+            state[key] = deepcopy(value)
+
+    settings = state.get("settings")
+    if not isinstance(settings, dict):
+        state["settings"] = deepcopy(DEFAULT_STATE["settings"])
+    else:
+        merged_settings = deepcopy(DEFAULT_STATE["settings"])
+        merged_settings.update(settings)
+        state["settings"] = merged_settings
+    return state
+
+
+def _draft_seed_version(state: Dict[str, Any]) -> int:
+    settings = state.get("settings")
+    if not isinstance(settings, dict):
+        return 0
+    version = settings.get(DRAFT_SEED_SETTING, 0)
+    return version if isinstance(version, int) else 0
+
+
+def _mark_draft_seeded(state: Dict[str, Any]) -> Dict[str, Any]:
+    settings = state.get("settings")
+    if not isinstance(settings, dict):
+        settings = {}
+    settings[DRAFT_SEED_SETTING] = DRAFT_SEED_VERSION
+    state["settings"] = settings
+    return state
+
+
+def _merge_draft_examples(state: Dict[str, Any]) -> Dict[str, Any]:
+    draft = _load_draft_state()
+    state = _ensure_default_keys(state)
+
+    for key, draft_value in draft.items():
+        if key == "settings" and isinstance(draft_value, dict):
+            settings = dict(draft_value)
+            settings.update(state.get("settings", {}))
+            state["settings"] = settings
+            continue
+        if not isinstance(draft_value, list):
+            continue
+
+        current_value = state.get(key, [])
+        if not isinstance(current_value, list):
+            current_value = []
+
+        existing_ids = {entry.get("id") for entry in current_value if isinstance(entry, dict)}
+        existing_raw = {entry.get("raw_value") for entry in current_value if isinstance(entry, dict)}
+        merged = list(current_value)
+        for entry in draft_value:
+            if not isinstance(entry, dict):
+                continue
+            if entry.get("id") in existing_ids or entry.get("raw_value") in existing_raw:
+                continue
+            merged.append(entry)
+            existing_ids.add(entry.get("id"))
+            existing_raw.add(entry.get("raw_value"))
+        state[key] = merged
+    return state
+
+
 def load_state() -> Dict[str, Any]:
     ensure_data_dir_exists()
     if not os.path.exists(APP_STATE_PATH):
-        return DEFAULT_STATE.copy()
+        state = _load_draft_state()
+        _mark_draft_seeded(state)
+        save_state(state)
+        return state
     try:
-        with open(APP_STATE_PATH, "r", encoding="utf-8") as f:
-            state = json.load(f)
-            for key, value in DEFAULT_STATE.items():
-                if key not in state:
-                    state[key] = value
+        state = _read_json_file(APP_STATE_PATH)
+        if _draft_seed_version(state) < DRAFT_SEED_VERSION:
+            state = _merge_draft_examples(state)
+            _mark_draft_seeded(state)
+            save_state(state)
             return state
+        return _ensure_default_keys(state)
     except (json.JSONDecodeError, IOError):
-        return DEFAULT_STATE.copy()
+        state = _load_draft_state()
+        _mark_draft_seeded(state)
+        save_state(state)
+        return state
 
 def save_state(state: Dict[str, Any]) -> None:
     ensure_data_dir_exists()
@@ -57,6 +150,10 @@ def save_state(state: Dict[str, Any]) -> None:
 def reset_state_from_draft() -> None:
     ensure_data_dir_exists()
     if not os.path.exists(APP_STATE_DRAFT_PATH):
-        save_state(DEFAULT_STATE.copy())
+        state = _default_state_copy()
+        _mark_draft_seeded(state)
+        save_state(state)
         return
-    shutil.copyfile(APP_STATE_DRAFT_PATH, APP_STATE_PATH)
+    state = _load_draft_state()
+    _mark_draft_seeded(state)
+    save_state(state)

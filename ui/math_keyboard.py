@@ -37,7 +37,7 @@ transition: all 0.12s ease; box-shadow: 0 1px 2px rgba(0,0,0,0.05); font-family:
 <button type="button" class="mk-btn" data-sym="/">/</button>
 <button type="button" class="mk-btn" data-sym="^">^</button>
 <button type="button" class="mk-btn" data-sym="&lt;=">&lt;=</button>
-<button type="button" class="mk-btn" data-sym=">=">&gt;=</button>
+<button type="button" class="mk-btn" data-sym="&gt;=">&gt;=</button>
 <button type="button" class="mk-btn" data-sym="=">=</button>
 <button type="button" class="mk-btn" data-sym="()" data-off="1">( )</button>
 <button type="button" class="mk-btn" data-sym="||" data-off="1">| |</button>
@@ -52,8 +52,8 @@ transition: all 0.12s ease; box-shadow: 0 1px 2px rgba(0,0,0,0.05); font-family:
 <button type="button" class="mk-btn" data-sym="{}" data-off="1">{ }</button>
 <button type="button" class="mk-btn" data-sym="{(,)}" data-off="3">{( , )}</button>
 <button type="button" class="mk-btn" data-sym="[-1,1]x[-1,1]">prostokąt</button>
-<button type="button" class="mk-btn" data-sym="x^2 + y^2 <= 1">dysk</button>
-<button type="button" class="mk-btn" data-sym="1/4 < x^2 + y^2 <= 1">pierścień</button>
+<button type="button" class="mk-btn" data-sym="x^2 + y^2 &lt;= 1">dysk</button>
+<button type="button" class="mk-btn" data-sym="1/4 &lt; x^2 + y^2 &lt;= 1">pierścień</button>
 </div>
 
 <div class="mk-group">
@@ -73,37 +73,18 @@ transition: all 0.12s ease; box-shadow: 0 1px 2px rgba(0,0,0,0.05); font-family:
 </div>
 
 <script>
+(() => {
 const parentWindow = window.parent;
-const parentDocument = parentWindow.document;
-
-if (!parentWindow.__mathKeyboardState) {
-    parentWindow.__mathKeyboardState = { input: null, start: 0, end: 0 };
-
-    const isEditableTarget = el => {
-        if (!el) return false;
-        const tag = el.tagName;
-        if (tag !== "INPUT" && tag !== "TEXTAREA") return false;
-        if (el.disabled || el.readOnly) return false;
-        const type = (el.getAttribute("type") || "text").toLowerCase();
-        return !["button", "submit", "reset", "checkbox", "radio", "file", "hidden"].includes(type);
-    };
-
-    const remember = el => {
-        if (!isEditableTarget(el)) return;
-        parentWindow.__mathKeyboardState.input = el;
-        parentWindow.__mathKeyboardState.start = typeof el.selectionStart === "number" ? el.selectionStart : el.value.length;
-        parentWindow.__mathKeyboardState.end = typeof el.selectionEnd === "number" ? el.selectionEnd : el.value.length;
-    };
-
-    parentDocument.addEventListener("focusin", e => remember(e.target), true);
-    parentDocument.addEventListener("mouseup", e => remember(e.target), true);
-    parentDocument.addEventListener("keyup", e => remember(e.target), true);
-    parentDocument.addEventListener("select", e => remember(e.target), true);
-    parentDocument.addEventListener("input", e => remember(e.target), true);
+let parentDocument = null;
+try {
+    parentDocument = parentWindow.document;
+} catch (err) {
+    return;
 }
 
 const isEditableTarget = el => {
     if (!el) return false;
+    if (!parentDocument.contains(el)) return false;
     const tag = el.tagName;
     if (tag !== "INPUT" && tag !== "TEXTAREA") return false;
     if (el.disabled || el.readOnly) return false;
@@ -111,11 +92,33 @@ const isEditableTarget = el => {
     return !["button", "submit", "reset", "checkbox", "radio", "file", "hidden"].includes(type);
 };
 
+if (!parentWindow.__mathKeyboardState) {
+    parentWindow.__mathKeyboardState = { input: null, start: 0, end: 0 };
+}
+
+const remember = el => {
+    if (!isEditableTarget(el)) return;
+    parentWindow.__mathKeyboardState.input = el;
+    parentWindow.__mathKeyboardState.start = typeof el.selectionStart === "number" ? el.selectionStart : el.value.length;
+    parentWindow.__mathKeyboardState.end = typeof el.selectionEnd === "number" ? el.selectionEnd : el.value.length;
+};
+
+parentDocument.addEventListener("focusin", e => remember(e.target), true);
+parentDocument.addEventListener("mousedown", e => remember(e.target), true);
+parentDocument.addEventListener("mouseup", e => remember(e.target), true);
+parentDocument.addEventListener("keyup", e => remember(e.target), true);
+parentDocument.addEventListener("select", e => remember(e.target), true);
+parentDocument.addEventListener("input", e => remember(e.target), true);
+
 const setNativeValue = (el, value) => {
     const win = el.ownerDocument.defaultView;
     const proto = el.tagName === "TEXTAREA" ? win.HTMLTextAreaElement.prototype : win.HTMLInputElement.prototype;
     const descriptor = Object.getOwnPropertyDescriptor(proto, "value");
-    descriptor.set.call(el, value);
+    if (descriptor && descriptor.set) {
+        descriptor.set.call(el, value);
+    } else {
+        el.value = value;
+    }
 };
 
 const insertSymbol = (symbol, backOffset) => {
@@ -134,8 +137,14 @@ const insertSymbol = (symbol, backOffset) => {
     const cursor = Math.max(0, Math.min(safeStart + symbol.length - backOffset, newValue.length));
 
     setNativeValue(el, newValue);
-    el.dispatchEvent(new InputEvent("input", { bubbles: true, inputType: "insertText", data: symbol }));
-    el.dispatchEvent(new Event("change", { bubbles: true }));
+    const ParentInputEvent = parentWindow.InputEvent || window.InputEvent;
+    const ParentEvent = parentWindow.Event || window.Event;
+    try {
+        el.dispatchEvent(new ParentInputEvent("input", { bubbles: true, inputType: "insertText", data: symbol }));
+    } catch (err) {
+        el.dispatchEvent(new ParentEvent("input", { bubbles: true }));
+    }
+    el.dispatchEvent(new ParentEvent("change", { bubbles: true }));
     el.focus({ preventScroll: true });
     el.setSelectionRange(cursor, cursor);
 
@@ -155,6 +164,7 @@ document.querySelectorAll(".mk-btn").forEach(btn => {
         e.stopPropagation();
     });
 });
+})();
 </script>
 """
     components.html(html_code, height=520, scrolling=True)
