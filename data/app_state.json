@@ -1,0 +1,706 @@
+{
+    "functions_1d":  [
+                         {
+                             "id":  "default-f1-x2",
+                             "label":  "f(x)",
+                             "raw_value":  "x^2",
+                             "parsed_preview":  "",
+                             "category":  "functions_1d",
+                             "created_at":  "2026-06-01T00:00:00",
+                             "updated_at":  "2026-06-01T00:00:00",
+                             "usage_count":  1,
+                             "tags":  [
+                                          "domyslne",
+                                          "bernstein"
+                                      ]
+                         },
+                         {
+                             "id":  "default-f1-sin",
+                             "label":  "f(x)",
+                             "raw_value":  "sin(pi*x)",
+                             "parsed_preview":  "",
+                             "category":  "functions_1d",
+                             "created_at":  "2026-06-01T00:00:00",
+                             "updated_at":  "2026-06-01T00:00:00",
+                             "usage_count":  1,
+                             "tags":  [
+                                          "domyslne",
+                                          "trygonometryczne"
+                                      ]
+                         },
+                         {
+                             "id":  "default-f1-abs",
+                             "label":  "f(x)",
+                             "raw_value":  "|x - 1/2|",
+                             "parsed_preview":  "",
+                             "category":  "functions_1d",
+                             "created_at":  "2026-06-01T00:00:00",
+                             "updated_at":  "2026-06-01T00:00:00",
+                             "usage_count":  1,
+                             "tags":  [
+                                          "domyslne",
+                                          "ciagla"
+                                      ]
+                         },
+                         {
+                             "id":  "default-f1-sqrt",
+                             "label":  "f(x)",
+                             "raw_value":  "sqrt(x)",
+                             "parsed_preview":  "",
+                             "category":  "functions_1d",
+                             "created_at":  "2026-06-01T00:00:00",
+                             "updated_at":  "2026-06-01T00:00:00",
+                             "usage_count":  1,
+                             "tags":  [
+                                          "domyslne"
+                                      ]
+                         },
+                         {
+                             "id":  "default-f1-exp",
+                             "label":  "f(x)",
+                             "raw_value":  "e^x",
+                             "parsed_preview":  "",
+                             "category":  "functions_1d",
+                             "created_at":  "2026-06-01T00:00:00",
+                             "updated_at":  "2026-06-01T00:00:00",
+                             "usage_count":  1,
+                             "tags":  [
+                                          "domyslne"
+                                      ]
+                         },
+                         {
+                             "id":  "default-f1-rational",
+                             "label":  "f(x)",
+                             "raw_value":  "\\frac{1}{1+x^2}",
+                             "parsed_preview":  "",
+                             "category":  "functions_1d",
+                             "created_at":  "2026-06-01T00:00:00",
+                             "updated_at":  "2026-06-01T00:00:00",
+                             "usage_count":  1,
+                             "tags":  [
+                                          "domyslne",
+                                          "latex"
+                                      ]
+                         }
+                     ],
+    "functions_2d":  [
+                         {
+                             "id":  "default-f2-x",
+                             "label":  "Î¦â‚",
+                             "raw_value":  "x",
+                             "parsed_preview":  "",
+                             "category":  "functions_2d",
+                             "created_at":  "2026-06-01T00:00:00",
+                             "updated_at":  "2026-06-01T00:00:00",
+                             "usage_count":  1,
+                             "tags":  [
+                                          "domyslne",
+                                          "odwzorowanie"
+                                      ]
+                         },
+                         {
+                             "id":  "default-f2-y",
+                             "label":  "Î¦â‚‚",
+                             "raw_value":  "y",
+                             "parsed_preview":  "",
+                             "category":  "functions_2d",
+                             "created_at":  "2026-06-01T00:00:00",
+                             "updated_at":  "2026-06-01T00:00:00",
+                             "usage_count":  1,
+                             "tags":  [
+                                          "domyslne",
+                                          "odwzorowanie"
+                                      ]
+                         },
+                         {
+                             "id":  "default-f2-disk",
+                             "label":  "f(x,y)",
+                             "raw_value":  "x^2 + y^2",
+                             "parsed_preview":  "",
+                             "category":  "functions_2d",
+                             "created_at":  "2026-06-01T00:00:00",
+                             "updated_at":  "2026-06-01T00:00:00",
+                             "usage_count":  1,
+                             "tags":  [
+                                          "domyslne",
+                                          "promien"
+                                      ]
+                         },
+                         {
+                             "id":  "default-f2-heart",
+                             "label":  "f(x,y)",
+                             "raw_value":  "(x^2 + y^2 - 1)^3 - x^2*y^3",
+                             "parsed_preview":  "",
+                             "category":  "functions_2d",
+                             "created_at":  "2026-06-01T00:00:00",
+                             "updated_at":  "2026-06-01T00:00:00",
+                             "usage_count":  1,
+                             "tags":  [
+                                          "domyslne",
+                                          "implicit"
+                                      ]
+                         },
+                         {
+                             "id":  "default-f2-gauss",
+                             "label":  "Î¦â‚‚",
+                             "raw_value":  "exp(-(x^2+y^2))",
+                             "parsed_preview":  "",
+                             "category":  "functions_2d",
+                             "created_at":  "2026-06-01T00:00:00",
+                             "updated_at":  "2026-06-01T00:00:00",
+                             "usage_count":  1,
+                             "tags":  [
+                                          "domyslne"
+                                      ]
+                         },
+                         {
+                             "id":  "default-f2-rotation-u",
+                             "label":  "Î¦â‚",
+                             "raw_value":  "x*cos(pi/4) - y*sin(pi/4)",
+                             "parsed_preview":  "",
+                             "category":  "functions_2d",
+                             "created_at":  "2026-06-01T00:00:00",
+                             "updated_at":  "2026-06-01T00:00:00",
+                             "usage_count":  1,
+                             "tags":  [
+                                          "domyslne",
+                                          "odwzorowanie"
+                                      ]
+                         },
+                         {
+                             "id":  "default-f2-rotation-v",
+                             "label":  "Phi2",
+                             "raw_value":  "x*sin(pi/4) + y*cos(pi/4)",
+                             "parsed_preview":  "",
+                             "category":  "functions_2d",
+                             "created_at":  "2026-06-01T00:00:00",
+                             "updated_at":  "2026-06-01T00:00:00",
+                             "usage_count":  1,
+                             "tags":  [
+                                          "domyslne",
+                                          "odwzorowanie"
+                                      ]
+                         },
+                         {
+                             "id":  "default-f2-fold",
+                             "label":  "Phi1",
+                             "raw_value":  "x^2 - y",
+                             "parsed_preview":  "",
+                             "category":  "functions_2d",
+                             "created_at":  "2026-06-01T00:00:00",
+                             "updated_at":  "2026-06-01T00:00:00",
+                             "usage_count":  1,
+                             "tags":  [
+                                          "domyslne",
+                                          "odwzorowanie"
+                                      ]
+                         },
+                         {
+                             "id":  "default-f2-fold-v",
+                             "label":  "Phi2",
+                             "raw_value":  "x + y",
+                             "parsed_preview":  "",
+                             "category":  "functions_2d",
+                             "created_at":  "2026-06-01T00:00:00",
+                             "updated_at":  "2026-06-01T00:00:00",
+                             "usage_count":  1,
+                             "tags":  [
+                                          "domyslne",
+                                          "odwzorowanie"
+                                      ]
+                         }
+                     ],
+    "vector_mappings_r2_r2":  [
+
+                              ],
+    "metrics":  [
+                    {
+                        "id":  "default-p-half",
+                        "label":  "Parametr Minkowskiego",
+                        "raw_value":  "1/2",
+                        "parsed_preview":  "",
+                        "category":  "metrics",
+                        "created_at":  "2026-06-01T00:00:00",
+                        "updated_at":  "2026-06-01T00:00:00",
+                        "usage_count":  1,
+                        "tags":  [
+                                     "domyslne"
+                                 ]
+                    },
+                    {
+                        "id":  "default-p-one",
+                        "label":  "Parametr Minkowskiego",
+                        "raw_value":  "1",
+                        "parsed_preview":  "",
+                        "category":  "metrics",
+                        "created_at":  "2026-06-01T00:00:00",
+                        "updated_at":  "2026-06-01T00:00:00",
+                        "usage_count":  1,
+                        "tags":  [
+                                     "domyslne"
+                                 ]
+                    },
+                    {
+                        "id":  "default-p-three-halves",
+                        "label":  "Parametr Minkowskiego",
+                        "raw_value":  "3/2",
+                        "parsed_preview":  "",
+                        "category":  "metrics",
+                        "created_at":  "2026-06-01T00:00:00",
+                        "updated_at":  "2026-06-01T00:00:00",
+                        "usage_count":  1,
+                        "tags":  [
+                                     "domyslne"
+                                 ]
+                    },
+                    {
+                        "id":  "default-p-two",
+                        "label":  "Parametr Minkowskiego",
+                        "raw_value":  "2",
+                        "parsed_preview":  "",
+                        "category":  "metrics",
+                        "created_at":  "2026-06-01T00:00:00",
+                        "updated_at":  "2026-06-01T00:00:00",
+                        "usage_count":  1,
+                        "tags":  [
+                                     "domyslne"
+                                 ]
+                    },
+                    {
+                        "id":  "default-p-three",
+                        "label":  "Parametr Minkowskiego",
+                        "raw_value":  "3",
+                        "parsed_preview":  "",
+                        "category":  "metrics",
+                        "created_at":  "2026-06-01T00:00:00",
+                        "updated_at":  "2026-06-01T00:00:00",
+                        "usage_count":  1,
+                        "tags":  [
+                                     "domyslne"
+                                 ]
+                    }
+                ],
+    "custom_metrics":  [
+                           {
+                               "id":  "default-custom-l1",
+                               "label":  "Metryka wlasna",
+                               "raw_value":  "SUM(|xi-yi|)",
+                               "parsed_preview":  "",
+                               "category":  "custom_metrics",
+                               "created_at":  "2026-06-01T00:00:00",
+                               "updated_at":  "2026-06-01T00:00:00",
+                               "usage_count":  1,
+                               "tags":  [
+                                            "domyslne"
+                                        ]
+                           },
+                           {
+                               "id":  "default-custom-l2",
+                               "label":  "Metryka wlasna",
+                               "raw_value":  "sqrt(SUM((xi-yi)^2))",
+                               "parsed_preview":  "",
+                               "category":  "custom_metrics",
+                               "created_at":  "2026-06-01T00:00:00",
+                               "updated_at":  "2026-06-01T00:00:00",
+                               "usage_count":  1,
+                               "tags":  [
+                                            "domyslne"
+                                        ]
+                           },
+                           {
+                               "id":  "default-custom-l3",
+                               "label":  "Metryka wlasna",
+                               "raw_value":  "SUM(|xi-yi|^3)^(1/3)",
+                               "parsed_preview":  "",
+                               "category":  "custom_metrics",
+                               "created_at":  "2026-06-01T00:00:00",
+                               "updated_at":  "2026-06-01T00:00:00",
+                               "usage_count":  1,
+                               "tags":  [
+                                            "domyslne"
+                                        ]
+                           },
+                           {
+                               "id":  "default-custom-max",
+                               "label":  "Metryka wlasna",
+                               "raw_value":  "Max(|x1-y1|, |x2-y2|)",
+                               "parsed_preview":  "",
+                               "category":  "custom_metrics",
+                               "created_at":  "2026-06-01T00:00:00",
+                               "updated_at":  "2026-06-01T00:00:00",
+                               "usage_count":  1,
+                               "tags":  [
+                                            "domyslne"
+                                        ]
+                           }
+                       ],
+    "points":  [
+                   {
+                       "id":  "default-points-grid-2d",
+                       "label":  "Zbior E",
+                       "raw_value":  "(-1, -1)\n(-1, 0)\n(-1, 1)\n(0, -1)\n(0, 0)\n(0, 1)\n(1, -1)\n(1, 0)\n(1, 1)",
+                       "parsed_preview":  "",
+                       "category":  "points",
+                       "created_at":  "2026-06-01T00:00:00",
+                       "updated_at":  "2026-06-01T00:00:00",
+                       "usage_count":  1,
+                       "tags":  [
+                                    "domyslne",
+                                    "duzy"
+                                ]
+                   },
+                   {
+                       "id":  "default-points-symbolic-2d",
+                       "label":  "Zbior E",
+                       "raw_value":  "(0, 0)\n(1, 1)\n(e, sqrt(2))\n(pi, 1/2)",
+                       "parsed_preview":  "",
+                       "category":  "points",
+                       "created_at":  "2026-06-01T00:00:00",
+                       "updated_at":  "2026-06-01T00:00:00",
+                       "usage_count":  1,
+                       "tags":  [
+                                    "domyslne",
+                                    "symboliczne"
+                                ]
+                   },
+                   {
+                       "id":  "default-points-circle-ish",
+                       "label":  "ZbiĂłr F",
+                       "raw_value":  "(1, 0)\n(0, 1)\n(-1, 0)\n(0, -1)\n(sqrt(2)/2, sqrt(2)/2)\n(-sqrt(2)/2, sqrt(2)/2)\n(-sqrt(2)/2, -sqrt(2)/2)\n(sqrt(2)/2, -sqrt(2)/2)",
+                       "parsed_preview":  "",
+                       "category":  "points",
+                       "created_at":  "2026-06-01T00:00:00",
+                       "updated_at":  "2026-06-01T00:00:00",
+                       "usage_count":  1,
+                       "tags":  [
+                                    "domyslne",
+                                    "duzy"
+                                ]
+                   },
+                   {
+                       "id":  "default-points-3d",
+                       "label":  "Zbior E",
+                       "raw_value":  "(0, 0, 0)\n(1, 0, 0)\n(0, 1, 0)\n(0, 0, 1)\n(1, 1, 1)",
+                       "parsed_preview":  "",
+                       "category":  "points",
+                       "created_at":  "2026-06-01T00:00:00",
+                       "updated_at":  "2026-06-01T00:00:00",
+                       "usage_count":  1,
+                       "tags":  [
+                                    "domyslne",
+                                    "3d"
+                                ]
+                   },
+                   {
+                       "id":  "default-points-4d",
+                       "label":  "Zbior E",
+                       "raw_value":  "(0, 0, 0, 0)\n(1, 0, 0, 0)\n(0, 1, 0, 0)\n(0, 0, 1, 0)\n(0, 0, 0, 1)\n(1, 1, 1, 1)",
+                       "parsed_preview":  "",
+                       "category":  "points",
+                       "created_at":  "2026-06-01T00:00:00",
+                       "updated_at":  "2026-06-01T00:00:00",
+                       "usage_count":  1,
+                       "tags":  [
+                                    "domyslne",
+                                    "4d"
+                                ]
+                   },
+                   {
+                       "id":  "default-points-f-small",
+                       "label":  "Zbior F",
+                       "raw_value":  "(2, 0)\n(0, 2)\n(e, sqrt(2))",
+                       "parsed_preview":  "",
+                       "category":  "points",
+                       "created_at":  "2026-06-01T00:00:00",
+                       "updated_at":  "2026-06-01T00:00:00",
+                       "usage_count":  1,
+                       "tags":  [
+                                    "domyslne"
+                                ]
+                   },
+                   {
+                       "id":  "default-point-single",
+                       "label":  "Punkt",
+                       "raw_value":  "(sqrt(2)/2, sqrt(2)/2)",
+                       "parsed_preview":  "",
+                       "category":  "points",
+                       "created_at":  "2026-06-01T00:00:00",
+                       "updated_at":  "2026-06-01T00:00:00",
+                       "usage_count":  1,
+                       "tags":  [
+                                    "domyslne"
+                                ]
+                   }
+               ],
+    "point_sets":  [
+
+                   ],
+    "intervals":  [
+
+                  ],
+    "rectangles":  [
+
+                   ],
+    "sets_r":  [
+                   {
+                       "id":  "default-set-r-unit-closed",
+                       "label":  "Zbior A",
+                       "raw_value":  "[0, 1]",
+                       "parsed_preview":  "",
+                       "category":  "sets_r",
+                       "created_at":  "2026-06-01T00:00:00",
+                       "updated_at":  "2026-06-01T00:00:00",
+                       "usage_count":  1,
+                       "tags":  [
+                                    "domyslne"
+                                ]
+                   },
+                   {
+                       "id":  "default-set-r-unit-open",
+                       "label":  "Zbior A",
+                       "raw_value":  "(0, 1)",
+                       "parsed_preview":  "",
+                       "category":  "sets_r",
+                       "created_at":  "2026-06-01T00:00:00",
+                       "updated_at":  "2026-06-01T00:00:00",
+                       "usage_count":  1,
+                       "tags":  [
+                                    "domyslne"
+                                ]
+                   },
+                   {
+                       "id":  "default-set-r-finite",
+                       "label":  "Zbior A",
+                       "raw_value":  "{0, 1/2, 1}",
+                       "parsed_preview":  "",
+                       "category":  "sets_r",
+                       "created_at":  "2026-06-01T00:00:00",
+                       "updated_at":  "2026-06-01T00:00:00",
+                       "usage_count":  1,
+                       "tags":  [
+                                    "domyslne"
+                                ]
+                   },
+                   {
+                       "id":  "default-set-r-symmetric",
+                       "label":  "Zbior A",
+                       "raw_value":  "[-1, 1]",
+                       "parsed_preview":  "",
+                       "category":  "sets_r",
+                       "created_at":  "2026-06-01T00:00:00",
+                       "updated_at":  "2026-06-01T00:00:00",
+                       "usage_count":  1,
+                       "tags":  [
+                                    "domyslne"
+                                ]
+                   },
+                   {
+                       "id":  "default-set-r-two-intervals",
+                       "label":  "Zbior A",
+                       "raw_value":  "[-1, -1/2] \\lor [1/2, 1]",
+                       "parsed_preview":  "",
+                       "category":  "sets_r",
+                       "created_at":  "2026-06-01T00:00:00",
+                       "updated_at":  "2026-06-01T00:00:00",
+                       "usage_count":  1,
+                       "tags":  [
+                                    "domyslne",
+                                    "zlozony"
+                                ]
+                   },
+                   {
+                       "id":  "default-set-r-open-closed-composite",
+                       "label":  "Zbior A",
+                       "raw_value":  "[0, 2] \\land (1, 3)",
+                       "parsed_preview":  "",
+                       "category":  "sets_r",
+                       "created_at":  "2026-06-01T00:00:00",
+                       "updated_at":  "2026-06-01T00:00:00",
+                       "usage_count":  1,
+                       "tags":  [
+                                    "domyslne",
+                                    "zlozony"
+                                ]
+                   }
+               ],
+    "sets_r2":  [
+                    {
+                        "id":  "default-set-r2-disk",
+                        "label":  "ZbiĂłr C",
+                        "raw_value":  "x^2 + y^2 \u003c= 1",
+                        "parsed_preview":  "",
+                        "category":  "sets_r2",
+                        "created_at":  "2026-06-01T00:00:00",
+                        "updated_at":  "2026-06-01T00:00:00",
+                        "usage_count":  1,
+                        "tags":  [
+                                     "domyslne"
+                                 ]
+                    },
+                    {
+                        "id":  "default-set-r2-square",
+                        "label":  "Zbior C",
+                        "raw_value":  "[-1,1]x[-1,1]",
+                        "parsed_preview":  "",
+                        "category":  "sets_r2",
+                        "created_at":  "2026-06-01T00:00:00",
+                        "updated_at":  "2026-06-01T00:00:00",
+                        "usage_count":  1,
+                        "tags":  [
+                                     "domyslne"
+                                 ]
+                    },
+                    {
+                        "id":  "default-set-r2-heart",
+                        "label":  "ZbiĂłr C",
+                        "raw_value":  "(x^2+y^2-1)^3 - x^2*y^3 \u003c 0",
+                        "parsed_preview":  "",
+                        "category":  "sets_r2",
+                        "created_at":  "2026-06-01T00:00:00",
+                        "updated_at":  "2026-06-01T00:00:00",
+                        "usage_count":  1,
+                        "tags":  [
+                                     "domyslne",
+                                     "implicit"
+                                 ]
+                    },
+                    {
+                        "id":  "default-set-r2-halfplane",
+                        "label":  "Zbior B",
+                        "raw_value":  "u + v \u003c= 1",
+                        "parsed_preview":  "",
+                        "category":  "sets_r2",
+                        "created_at":  "2026-06-01T00:00:00",
+                        "updated_at":  "2026-06-01T00:00:00",
+                        "usage_count":  1,
+                        "tags":  [
+                                     "domyslne"
+                                 ]
+                    },
+                    {
+                        "id":  "default-set-r2-target-disk",
+                        "label":  "ZbiĂłr B",
+                        "raw_value":  "u^2 + v^2 \u003c= 1",
+                        "parsed_preview":  "",
+                        "category":  "sets_r2",
+                        "created_at":  "2026-06-01T00:00:00",
+                        "updated_at":  "2026-06-01T00:00:00",
+                        "usage_count":  1,
+                        "tags":  [
+                                     "domyslne"
+                                 ]
+                    },
+                    {
+                        "id":  "default-set-r2-parabola-region",
+                        "label":  "Zbior C",
+                        "raw_value":  "y \u003e= x^2 - 1",
+                        "parsed_preview":  "",
+                        "category":  "sets_r2",
+                        "created_at":  "2026-06-01T00:00:00",
+                        "updated_at":  "2026-06-01T00:00:00",
+                        "usage_count":  1,
+                        "tags":  [
+                                     "domyslne"
+                                 ]
+                    },
+                    {
+                        "id":  "default-set-r2-half-disk",
+                        "label":  "Zbior C",
+                        "raw_value":  "(x^2 + y^2 \u003c= 1) \\land (x \u003e= 0)",
+                        "parsed_preview":  "",
+                        "category":  "sets_r2",
+                        "created_at":  "2026-06-01T00:00:00",
+                        "updated_at":  "2026-06-01T00:00:00",
+                        "usage_count":  1,
+                        "tags":  [
+                                     "domyslne",
+                                     "zlozony"
+                                 ]
+                    },
+                    {
+                        "id":  "default-set-r2-annulus",
+                        "label":  "Zbior C",
+                        "raw_value":  "1/4 \u003c x^2 + y^2 \u003c= 1",
+                        "parsed_preview":  "",
+                        "category":  "sets_r2",
+                        "created_at":  "2026-06-01T00:00:00",
+                        "updated_at":  "2026-06-01T00:00:00",
+                        "usage_count":  1,
+                        "tags":  [
+                                     "domyslne",
+                                     "zlozony"
+                                 ]
+                    },
+                    {
+                        "id":  "default-set-r2-two-disks",
+                        "label":  "ZbiĂłr B",
+                        "raw_value":  "((x+1)^2 + y^2 \u003c= 1/2) \\lor ((x-1)^2 + y^2 \u003c= 1/2)",
+                        "parsed_preview":  "",
+                        "category":  "sets_r2",
+                        "created_at":  "2026-06-01T00:00:00",
+                        "updated_at":  "2026-06-01T00:00:00",
+                        "usage_count":  1,
+                        "tags":  [
+                                     "domyslne",
+                                     "zlozony"
+                                 ]
+                    },
+                    {
+                        "id":  "default-set-r2-heart-window",
+                        "label":  "Zbior C",
+                        "raw_value":  "((x^2+y^2-1)^3 - x^2*y^3 \u003c 0) \\land (y \u003e= -1.2)",
+                        "parsed_preview":  "",
+                        "category":  "sets_r2",
+                        "created_at":  "2026-06-01T00:00:00",
+                        "updated_at":  "2026-06-01T00:00:00",
+                        "usage_count":  1,
+                        "tags":  [
+                                     "domyslne",
+                                     "zlozony",
+                                     "implicit"
+                                 ]
+                    },
+                    {
+                        "id":  "default-set-r2-finite-points",
+                        "label":  "Zbior C",
+                        "raw_value":  "{(0, 0), (e, sqrt(2)), (pi, 1/2)}",
+                        "parsed_preview":  "",
+                        "category":  "sets_r2",
+                        "created_at":  "2026-06-01T00:00:00",
+                        "updated_at":  "2026-06-01T00:00:00",
+                        "usage_count":  1,
+                        "tags":  [
+                                     "domyslne",
+                                     "skonczony"
+                                 ]
+                    },
+                    {
+                        "id":  "default-set-r2-finite-intersection",
+                        "label":  "Zbior C",
+                        "raw_value":  "(x^2 + y^2 \u003c= 4) \\land {(0, 0), (1, 1), (e, sqrt(2)), (pi, 1/2)}",
+                        "parsed_preview":  "",
+                        "category":  "sets_r2",
+                        "created_at":  "2026-06-01T00:00:00",
+                        "updated_at":  "2026-06-01T00:00:00",
+                        "usage_count":  1,
+                        "tags":  [
+                                     "domyslne",
+                                     "zlozony",
+                                     "skonczony"
+                                 ]
+                    }
+                ],
+    "bernstein_examples":  [
+
+                           ],
+    "viewports":  [
+
+                  ],
+    "settings":  {
+                     "precision_digits":  50,
+                     "grid_resolution_1d":  2000,
+                     "grid_resolution_2d":  250,
+                     "adaptive_refinement":  true,
+                     "max_symbolic_n":  30
+                 }
+}
