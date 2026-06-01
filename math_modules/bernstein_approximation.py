@@ -29,7 +29,12 @@ def compute_bernstein_polynomial(f_expr: Any, n: int) -> Tuple[Any, Callable]:
             exact_b_n = None
 
     f_num = create_numpy_func_1d(f_expr, x)
-    sample_values = np.array([f_num(np.array([k / n], dtype=float))[0] for k in range(n + 1)], dtype=float)
+    sample_grid = np.linspace(0.0, 1.0, n + 1)
+    sample_values = np.asarray(f_num(sample_grid), dtype=float)
+    if sample_values.shape == ():
+        sample_values = np.full(n + 1, float(sample_values), dtype=float)
+    else:
+        sample_values = np.broadcast_to(sample_values, (n + 1,)).astype(float)
 
     def b_num(x_vals: np.ndarray) -> np.ndarray:
         vals = np.asarray(x_vals, dtype=float)
@@ -64,6 +69,18 @@ def compute_bernstein_polynomial(f_expr: Any, n: int) -> Tuple[Any, Callable]:
     return exact_b_n, b_num
 
 
+def bernstein_partial_latex(f_expr: Any, n: int, terms_count: int = 4) -> str:
+    x = sympy.Symbol("x", real=True)
+    visible = []
+    for k in range(min(int(n) + 1, terms_count)):
+        value = f_expr.subs(x, sympy.Rational(k, int(n)))
+        term = sympy.binomial(int(n), k) * (x ** k) * ((1 - x) ** (int(n) - k)) * value
+        visible.append(sympy.latex(term))
+    if int(n) + 1 > terms_count:
+        visible.append(r"\cdots")
+    return " + ".join(visible)
+
+
 def compute_bernstein_error(
     f_expr: Any,
     exact_b_n: Any,
@@ -77,7 +94,7 @@ def compute_bernstein_error(
     def err_num(vals: np.ndarray) -> np.ndarray:
         return np.abs(f_num(vals) - b_num(vals))
 
-    resolution = min(20000, max(3000, 800 + int(n) * 60))
+    resolution = min(24000, max(4000, 800 + min(int(n), 350) * 60))
     best_x, max_err = find_maximum_1d(err_num, 0.0, 1.0, resolution)
     if not np.isfinite(max_err):
         return DualValue(status="error", notes=["Nie udało się policzyć błędu na [0, 1]."])

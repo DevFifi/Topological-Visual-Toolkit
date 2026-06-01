@@ -6,8 +6,23 @@ import sympy
 from core.expression_parser import parse_expression
 from core.history import add_or_update_history_entry
 from core.safe_eval import create_numpy_func_1d
-from math_modules.bernstein_approximation import compute_bernstein_error, compute_bernstein_polynomial
+from math_modules.bernstein_approximation import bernstein_partial_latex, compute_bernstein_error, compute_bernstein_polynomial
 from ui.components import math_input, render_dual_value
+
+
+def _animation_degrees(target_n: int, max_frames: int) -> list[int]:
+    target_n = int(target_n)
+    max_frames = max(1, int(max_frames))
+    if target_n <= max_frames:
+        return list(range(1, target_n + 1))
+
+    values = np.linspace(1, target_n, max_frames)
+    degrees = sorted({max(1, min(target_n, int(round(value)))) for value in values})
+    if degrees[0] != 1:
+        degrees.insert(0, 1)
+    if degrees[-1] != target_n:
+        degrees.append(target_n)
+    return degrees
 
 
 def render() -> None:
@@ -16,11 +31,21 @@ def render() -> None:
 
     f_str = math_input("Funkcja f(x)", "functions_1d", "bernstein_f", default_val="x^2", preview_prefix_latex="f(x) = ")
 
-    col1, col2 = st.columns(2)
+    col1, col2, col3 = st.columns(3)
     with col1:
-        n = st.number_input("Stopień n", min_value=1, max_value=500, value=10, step=1)
+        n = st.number_input("Stopień n", min_value=1, value=10, step=1)
     with col2:
         precision = st.slider("Cyfry wyświetlania błędu", min_value=5, max_value=50, value=20)
+
+    with col3:
+        max_animation_frames = st.slider(
+            "Maks. klatek animacji",
+            min_value=50,
+            max_value=600,
+            value=240,
+            step=10,
+            help="Dla n większego od tej wartości animacja pokazuje stopnie równomiernie rozłożone od 1 do n.",
+        )
 
     if st.button("Oblicz i rysuj", type="primary"):
         f_res = parse_expression(f_str)
@@ -36,6 +61,9 @@ def render() -> None:
             st.latex(f"B_{{{int(n)}}}(f)(x) = " + sympy.latex(exact_b_n))
         else:
             st.info("Postać symboliczna jest zbyt duża; wykres i błąd liczone są numerycznie.")
+            st.latex(f"B_{{{int(n)}}}(f)(x) = " + bernstein_partial_latex(f_res.expr, int(n)))
+            if int(n) > 5000:
+                st.warning("Bardzo duże n może wyraźnie wydłużyć obliczenia, bo dla ogólnej funkcji trzeba uwzględnić wartości f(k/n).")
 
         err_dv = compute_bernstein_error(f_res.expr, exact_b_n, b_num, int(n), precision)
         render_dual_value(err_dv, f"Błąd d∞(f, B_{int(n)}(f))")
@@ -63,7 +91,7 @@ def render() -> None:
             st.error(f"Niepoprawna funkcja: {f_res.error}")
             return
 
-        max_n = min(int(n), 100)
+        degrees = _animation_degrees(int(n), int(max_animation_frames))
         x_vals = np.linspace(0.0, 1.0, 350)
         x = sympy.Symbol("x", real=True)
         f_num = create_numpy_func_1d(f_res.expr, x)
@@ -78,11 +106,12 @@ def render() -> None:
 
         frames = []
         progress = st.progress(0, text="Generowanie animacji...")
-        for i in range(1, max_n + 1):
-            _, b_num_i = compute_bernstein_polynomial(f_res.expr, i)
+        total_frames = len(degrees)
+        for frame_idx, degree in enumerate(degrees, start=1):
+            _, b_num_i = compute_bernstein_polynomial(f_res.expr, degree)
             y_b_i = b_num_i(x_vals)
-            frames.append(go.Frame(data=[go.Scatter(x=x_vals, y=y_b_i)], name=str(i), traces=[1]))
-            progress.progress(i / max_n, text=f"Klatka {i}/{max_n}")
+            frames.append(go.Frame(data=[go.Scatter(x=x_vals, y=y_b_i)], name=str(degree), traces=[1]))
+            progress.progress(frame_idx / total_frames, text=f"Klatka {frame_idx}/{total_frames} (n = {degree})")
         progress.empty()
 
         fig_anim = go.Figure(
@@ -123,10 +152,10 @@ def render() -> None:
                         steps=[
                             dict(
                                 method="animate",
-                                args=[[str(i)], dict(mode="immediate", frame=dict(duration=250, redraw=False))],
-                                label=str(i),
+                                args=[[str(degree)], dict(mode="immediate", frame=dict(duration=250, redraw=False))],
+                                label=str(degree),
                             )
-                            for i in range(1, max_n + 1)
+                            for degree in degrees
                         ],
                     )
                 ],
@@ -135,5 +164,9 @@ def render() -> None:
         )
 
         st.plotly_chart(fig_anim, use_container_width=True)
-        if int(n) > max_n:
-            st.caption("Animację ograniczono do n=100, żeby przeglądarka działała płynnie.")
+        if int(n) > len(degrees):
+            step_hint = max(1, int(round(int(n) / max(1, len(degrees) - 1))))
+            st.caption(
+                f"Animacja pokazuje {len(degrees)} klatek od n=1 do n={int(n)}; "
+                f"dla dużego n dobrano stopnie co około {step_hint}, z zachowaniem ostatniej klatki."
+            )

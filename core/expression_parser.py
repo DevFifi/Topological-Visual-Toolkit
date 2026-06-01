@@ -38,7 +38,7 @@ def _create_namespace() -> Dict[str, Any]:
         "v": sympy.Symbol("v", real=True),
     }
     
-    for i in range(1, 21):
+    for i in range(1, 201):
         ns[f"x{i}"] = sympy.Symbol(f"x{i}", real=True)
         ns[f"y{i}"] = sympy.Symbol(f"y{i}", real=True)
         ns[f"dx{i}"] = sympy.Symbol(f"dx{i}", real=True)

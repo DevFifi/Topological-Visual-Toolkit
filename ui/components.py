@@ -1,5 +1,6 @@
 import html
-from typing import List, Optional
+import re
+from typing import List, Optional, Tuple
 
 import streamlit as st
 import sympy
@@ -8,6 +9,7 @@ from core.exact_numeric import DualValue
 from core.expression_parser import parse_expression
 from core.formatting import format_exact, latex_exact
 from core.history import add_or_update_history_entry, get_history, remove_history_entry
+from core.set_parser import split_top_level
 
 
 def render_dual_value(dv: DualValue, title: str = "Wynik") -> None:
@@ -130,6 +132,124 @@ def render_distance_matrix_html(
     st.markdown("".join(html_parts), unsafe_allow_html=True)
 
 
+def _point_items_for_label(raw: str) -> List[str]:
+    cleaned = str(raw).strip()
+    if not cleaned:
+        return []
+    if cleaned.startswith("[") and cleaned.endswith("]"):
+        inner = cleaned[1:-1].strip()
+        return split_top_level(inner) if inner else []
+    lines = [line.strip() for line in cleaned.splitlines() if line.strip()]
+    if len(lines) == 1:
+        loose = split_top_level(lines[0])
+        return loose if len(loose) > 1 else lines
+    return lines
+
+
+def _history_role_label(label: str) -> str:
+    cleaned = str(label or "").strip()
+    lowered = cleaned.lower()
+    if re.search(r"(^|\s)(zbior|zbiór)?\s*e($|\s)", lowered) or cleaned == "E":
+        return "[E]"
+    if re.search(r"(^|\s)(zbior|zbiór)?\s*f($|\s)", lowered) or cleaned == "F":
+        return "[F]"
+    if "punkt" in lowered:
+        return "[P]"
+    if cleaned in {"A", "B", "C"}:
+        return f"[{cleaned}]"
+    return "[ ]"
+
+
+def _split_box_product_for_label(text: str) -> List[str]:
+    parts: List[str] = []
+    current: List[str] = []
+    stack: List[str] = []
+    pairs = {"(": ")", "[": "]", "{": "}"}
+    closing = set(pairs.values())
+    i = 0
+    while i < len(text):
+        ch = text[i]
+        if ch in pairs:
+            stack.append(pairs[ch])
+            current.append(ch)
+            i += 1
+            continue
+        if ch in closing:
+            if stack and ch == stack[-1]:
+                stack.pop()
+            current.append(ch)
+            i += 1
+            continue
+        if not stack and text.startswith(r"\times", i):
+            parts.append("".join(current).strip())
+            current = []
+            i += len(r"\times")
+            continue
+        prev_nonspace = next((text[j] for j in range(i - 1, -1, -1) if not text[j].isspace()), "")
+        next_nonspace = next((text[j] for j in range(i + 1, len(text)) if not text[j].isspace()), "")
+        if not stack and ch in {"x", "X", "×"} and prev_nonspace in {"]", ")"} and next_nonspace in {"[", "("}:
+            parts.append("".join(current).strip())
+            current = []
+            i += 1
+            continue
+        current.append(ch)
+        i += 1
+    tail = "".join(current).strip()
+    if tail:
+        parts.append(tail)
+    return parts
+
+
+def _point_history_meta(raw: str) -> Tuple[str, str, str]:
+    text = str(raw).strip()
+    generator_match = re.match(r"^\s*(random|basis|line)\s*\((.*)\)\s*$", text, flags=re.IGNORECASE | re.DOTALL)
+    if generator_match:
+        args = {}
+        for item in split_top_level(generator_match.group(2)):
+            if "=" in item:
+                key, value = item.split("=", 1)
+                args[key.strip().lower()] = value.strip()
+        dim = args.get("dim", "?")
+        if generator_match.group(1).lower() == "basis":
+            count = str(int(dim) + 1) if str(dim).isdigit() else "n+1"
+        else:
+            count = args.get("count", "?")
+        return str(dim), count, text
+
+    if any(token in text for token in ("\\cup", "\\cap", "\\land", "\\lor", "×")) or re.search(r"[\]\)]\s*[xX]\s*[\[(]", text):
+        boxes = re.findall(
+            r"[\[\(][^\[\]\(\)]*,[^\[\]\(\)]*[\]\)](?:\s*(?:\\times|×|[xX])\s*[\[\(][^\[\]\(\)]*,[^\[\]\(\)]*[\]\)])*",
+            text,
+        )
+        product_parts = _split_box_product_for_label(boxes[0]) if boxes else []
+        dim = str(len(product_parts)) if product_parts else "?"
+        return dim, "∞", " ".join(text.split())
+
+    items = _point_items_for_label(raw)
+    dims = []
+    for item in items:
+        item = item.strip()
+        if (item.startswith("(") and item.endswith(")")) or (item.startswith("[") and item.endswith("]")):
+            dims.append(len(split_top_level(item[1:-1])))
+        elif item:
+            dims.append(1)
+    if not items or not dims:
+        preview = text.splitlines()[0] if text else ""
+        return "?", "?", preview
+    dim_values = sorted(set(dims))
+    dim_text = str(dim_values[0]) if len(dim_values) == 1 else "/".join(str(dim) for dim in dim_values)
+    preview_items = items[:2]
+    preview = "[" + ", ".join(preview_items) + (", ..." if len(items) > 2 else "") + "]"
+    return dim_text, str(len(items)), preview
+
+
+def _format_point_history_option(label_text: str, raw: str) -> str:
+    dim, count, preview = _point_history_meta(raw)
+    preview = " ".join(str(preview).split())
+    result = f"{_history_role_label(label_text)} | n={dim} | {count} | {preview}"
+    return result if len(result) <= 120 else result[:117] + "..."
+
+
 def math_input(
     label: str,
     history_category: str,
@@ -148,7 +268,15 @@ def math_input(
         if entry_id is None:
             return "Wpisz ręcznie"
         raw = entry_by_id[entry_id]["raw_value"]
-        return raw if len(raw) <= 70 else raw[:67] + "..."
+        label_text = entry_by_id[entry_id].get("label", "").strip()
+        if history_category == "points":
+            return _format_point_history_option(label_text, raw)
+        stats = ""
+        first_line = str(raw).strip().splitlines()[0] if str(raw).strip() else ""
+        preview = first_line if len(first_line) <= 54 else first_line[:51] + "..."
+        parts = [part for part in (label_text, stats, preview) if part]
+        result = " - ".join(parts) if parts else str(raw)
+        return result if len(result) <= 90 else result[:87] + "..."
 
     selected_id = st.selectbox(
         f"Historia: {label}",

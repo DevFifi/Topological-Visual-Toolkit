@@ -382,11 +382,11 @@ class Relation2D(ParsedSet):
 
         finite = np.isfinite(diff)
         if self.operator == "<":
-            mask = diff < -tolerance
+            mask = diff < 0
         elif self.operator == "<=":
             mask = diff <= tolerance
         elif self.operator == ">":
-            mask = diff > tolerance
+            mask = diff > 0
         elif self.operator == ">=":
             mask = diff >= -tolerance
         elif self.operator == "!=":
@@ -458,10 +458,6 @@ def _split_top_level_token(s: str, token: str) -> List[str]:
 
 
 def _parse_logical_set(s: str, atom_parser) -> Optional[ParsedSet]:
-    direct = atom_parser(s.strip())
-    if direct is not None:
-        return direct
-
     stripped = _strip_enclosing_parentheses(s)
     for token, operator in ((" OR ", "union"), (" AND ", "intersection")):
         parts = _split_top_level_token(stripped, token)
@@ -473,6 +469,29 @@ def _parse_logical_set(s: str, atom_parser) -> Optional[ParsedSet]:
             for part in parsed_parts[1:]:
                 result = CompositeSet(result, part, operator)
             return result
+
+    raw = s.strip()
+    if len(raw) >= 2 and raw[0] in "([{" and raw[-1] in ")]}":
+        direct = atom_parser(raw)
+        if direct is not None:
+            return direct
+        if stripped != raw:
+            direct = atom_parser(stripped)
+            if direct is not None:
+                return direct
+
+    comma_parts = split_top_level(stripped)
+    if len(comma_parts) > 1:
+        parsed_parts = [_parse_logical_set(part, atom_parser) for part in comma_parts]
+        if any(part is None for part in parsed_parts):
+            return None
+        result = parsed_parts[0]
+        for part in parsed_parts[1:]:
+            result = CompositeSet(result, part, "intersection")
+        return result
+    direct = atom_parser(raw)
+    if direct is not None:
+        return direct
     return atom_parser(stripped)
 
 

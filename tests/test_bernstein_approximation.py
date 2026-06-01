@@ -1,6 +1,6 @@
 import sympy
 
-from math_modules.bernstein_approximation import compute_bernstein_error, compute_bernstein_polynomial
+from math_modules.bernstein_approximation import bernstein_partial_latex, compute_bernstein_error, compute_bernstein_polynomial
 
 
 def test_bernstein_linear():
@@ -56,3 +56,10 @@ def test_bernstein_error_for_quadratic_decreases_with_n():
     err_5 = compute_bernstein_error(x**2, None, b_num_5, 5)
     err_30 = compute_bernstein_error(x**2, None, b_num_30, 30)
     assert float(err_30.numeric) < float(err_5.numeric)
+
+
+def test_bernstein_partial_latex_shows_first_terms_and_ellipsis():
+    x = sympy.Symbol("x", real=True)
+    rendered = bernstein_partial_latex(sympy.sin(50 * x), 100, terms_count=3)
+    assert r"\cdots" in rendered
+    assert "sin" in rendered

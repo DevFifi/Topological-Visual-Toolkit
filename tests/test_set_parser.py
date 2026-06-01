@@ -174,3 +174,19 @@ def test_composite_set_latex_uses_union_and_intersection_symbols():
     rendered = set_latex(parsed, "C")
     assert r"\cap" in rendered
     assert r"\le" in rendered
+
+
+def test_parse_unparenthesized_cap_between_relations_before_chained_relation():
+    parsed = parse_set_2d(r"x^2 + y^2 <= 1 \cap x*y < 1")
+    assert isinstance(parsed, CompositeSet)
+    rendered = set_latex(parsed, "C")
+    assert r"\cap" in rendered
+    assert "AND" not in rendered
+    assert parsed.contains_numeric((0.0, 0.0))
+
+
+def test_parse_top_level_comma_as_intersection_between_relations():
+    parsed = parse_set_2d("x^2 + y^2 <= 1, x*y < 1")
+    assert isinstance(parsed, CompositeSet)
+    assert parsed.contains_numeric((0.0, 0.0))
+    assert not parsed.contains_numeric((2.0, 0.0))

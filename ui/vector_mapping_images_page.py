@@ -112,13 +112,40 @@ def _add_relation_boundary(
     return True
 
 
-def _add_source_boundaries(fig: go.Figure, parsed_set, bounds, color: str, name: str) -> None:
+def _clip_relation_grid_to_set(X, Y, Z, clip_set, resolution: int):
+    if clip_set is None:
+        return Z
+    try:
+        width = max(float(np.nanmax(X) - np.nanmin(X)), float(np.nanmax(Y) - np.nanmin(Y)))
+        tolerance = max(1e-9, width / max(1, int(resolution)) * 0.25)
+        clip_mask = clip_set.contains_arrays(X, Y, tolerance=tolerance)
+        return np.where(clip_mask, Z, np.nan)
+    except Exception:
+        return Z
+
+
+def _clip_preimage_relation_grid_to_set(phi1_expr, phi2_expr, clip_set, bounds, Z, resolution: int):
+    if clip_set is None:
+        return Z
+    try:
+        _, _, clip_mask = compute_preimage_grid(phi1_expr, phi2_expr, clip_set, bounds, resolution=resolution)
+        return np.where(clip_mask, Z, np.nan)
+    except Exception:
+        return Z
+
+
+def _add_source_boundaries(fig: go.Figure, parsed_set, bounds, color: str, name: str, resolution: int, clip_set=None) -> None:
     if isinstance(parsed_set, Relation2D):
-        X, Y, Z = sample_relation_grid(parsed_set, bounds, resolution=520)
+        X, Y, Z = sample_relation_grid(parsed_set, bounds, resolution=resolution)
+        Z = _clip_relation_grid_to_set(X, Y, Z, clip_set, resolution)
         _add_relation_boundary(fig, X[0, :], Y[:, 0], Z, parsed_set.operator, color, name)
     elif isinstance(parsed_set, CompositeSet):
-        _add_source_boundaries(fig, parsed_set.left, bounds, color, name)
-        _add_source_boundaries(fig, parsed_set.right, bounds, color, name)
+        if parsed_set.operator == "intersection":
+            _add_source_boundaries(fig, parsed_set.left, bounds, color, name, resolution, parsed_set.right)
+            _add_source_boundaries(fig, parsed_set.right, bounds, color, name, resolution, parsed_set.left)
+        else:
+            _add_source_boundaries(fig, parsed_set.left, bounds, color, name, resolution, clip_set)
+            _add_source_boundaries(fig, parsed_set.right, bounds, color, name, resolution, clip_set)
 
 
 def _add_preimage_boundaries(
@@ -129,13 +156,20 @@ def _add_preimage_boundaries(
     bounds,
     color: str,
     name: str,
+    resolution: int,
+    clip_set=None,
 ) -> None:
     if isinstance(parsed_set, Relation2D):
-        X, Y, Z = compute_preimage_relation_grid(phi1_expr, phi2_expr, parsed_set, bounds, resolution=420)
+        X, Y, Z = compute_preimage_relation_grid(phi1_expr, phi2_expr, parsed_set, bounds, resolution=resolution)
+        Z = _clip_preimage_relation_grid_to_set(phi1_expr, phi2_expr, clip_set, bounds, Z, resolution)
         _add_relation_boundary(fig, X[0, :], Y[:, 0], Z, parsed_set.operator, color, name)
     elif isinstance(parsed_set, CompositeSet):
-        _add_preimage_boundaries(fig, parsed_set.left, phi1_expr, phi2_expr, bounds, color, name)
-        _add_preimage_boundaries(fig, parsed_set.right, phi1_expr, phi2_expr, bounds, color, name)
+        if parsed_set.operator == "intersection":
+            _add_preimage_boundaries(fig, parsed_set.left, phi1_expr, phi2_expr, bounds, color, name, resolution, parsed_set.right)
+            _add_preimage_boundaries(fig, parsed_set.right, phi1_expr, phi2_expr, bounds, color, name, resolution, parsed_set.left)
+        else:
+            _add_preimage_boundaries(fig, parsed_set.left, phi1_expr, phi2_expr, bounds, color, name, resolution, clip_set)
+            _add_preimage_boundaries(fig, parsed_set.right, phi1_expr, phi2_expr, bounds, color, name, resolution, clip_set)
 
 
 def render() -> None:
@@ -174,6 +208,15 @@ def render() -> None:
     with col8:
         d = st.number_input("y max", value=2.0, key="vd")
 
+    quality_resolution = st.slider(
+        "Jakość rysowania (liczba próbek na oś)",
+        min_value=250,
+        max_value=2200,
+        value=850,
+        step=50,
+        help="Większa wartość daje gładsze brzegi i mniej dziur, ale obliczenia trwają dłużej.",
+    )
+
     if st.button("Oblicz i rysuj", type="primary"):
         if a > b or c > d:
             st.error("Okno musi spełniać x min <= x max oraz y min <= y max.")
@@ -205,12 +248,13 @@ def render() -> None:
         source_bounds = ((float(a), float(b)), (float(c), float(d)))
         plot_col1, plot_col2 = st.columns(2)
 
-        image_resolution = 340
+        image_resolution = int(quality_resolution)
+        boundary_resolution = min(2200, max(520, image_resolution))
         with plot_col1:
             st.write("### Obraz Φ(C)")
             fig_img = go.Figure()
             if _is_identity_mapping(phi1_res.expr, phi2_res.expr) and isinstance(c_set, Relation2D):
-                Xc, Yc, Zc = sample_relation_grid(c_set, source_bounds, resolution=520)
+                Xc, Yc, Zc = sample_relation_grid(c_set, source_bounds, resolution=image_resolution)
                 if not _add_relation_region(fig_img, Xc[0, :], Yc[:, 0], Zc, c_set.operator, "#1f5f9f", "Φ(C)"):
                     st.info("W wybranym oknie i rozdzielczości nie znaleziono punktów zbioru C.")
             elif _is_identity_mapping(phi1_res.expr, phi2_res.expr):
@@ -230,9 +274,9 @@ def render() -> None:
                         name="Φ(C)",
                     )
                 )
-                _add_source_boundaries(fig_img, c_set, source_bounds, "#1f5f9f", "brzeg Φ(C)")
+                _add_source_boundaries(fig_img, c_set, source_bounds, "#1f5f9f", "brzeg Φ(C)", boundary_resolution)
             else:
-                u_list, v_list = compute_image_points(phi1_res.expr, phi2_res.expr, c_set, source_bounds, resolution=image_resolution)
+                u_list, v_list = compute_image_points(phi1_res.expr, phi2_res.expr, c_set, source_bounds, resolution=min(image_resolution, 1300))
                 if not u_list:
                     st.info("W wybranym oknie i rozdzielczości nie znaleziono punktów zbioru C.")
                 fig_img.add_trace(
@@ -257,10 +301,10 @@ def render() -> None:
 
         preimage_relation_mode = isinstance(b_set, Relation2D)
         if preimage_relation_mode:
-            X, Y, Z_rel = compute_preimage_relation_grid(phi1_res.expr, phi2_res.expr, b_set, source_bounds, resolution=420)
+            X, Y, Z_rel = compute_preimage_relation_grid(phi1_res.expr, phi2_res.expr, b_set, source_bounds, resolution=image_resolution)
             Z_bool = np.zeros_like(Z_rel, dtype=bool)
         else:
-            X, Y, Z_bool = compute_preimage_grid(phi1_res.expr, phi2_res.expr, b_set, source_bounds, resolution=320)
+            X, Y, Z_bool = compute_preimage_grid(phi1_res.expr, phi2_res.expr, b_set, source_bounds, resolution=image_resolution)
         with plot_col2:
             st.write("### Przeciwobraz Φ⁻¹(B)")
             if not preimage_relation_mode and not Z_bool.any():
@@ -283,7 +327,7 @@ def render() -> None:
                         name="Φ⁻¹(B)",
                     )
                 )
-                _add_preimage_boundaries(fig_pre, b_set, phi1_res.expr, phi2_res.expr, source_bounds, "#2f7d46", "brzeg Φ⁻¹(B)")
+                _add_preimage_boundaries(fig_pre, b_set, phi1_res.expr, phi2_res.expr, source_bounds, "#2f7d46", "brzeg Φ⁻¹(B)", boundary_resolution)
             fig_pre.update_layout(
                 template="plotly_white",
                 xaxis_title="x",

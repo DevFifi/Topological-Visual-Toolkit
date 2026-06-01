@@ -69,6 +69,15 @@ def render() -> None:
     with col8:
         d = st.number_input("y max", value=2.0)
 
+    quality_resolution = st.slider(
+        "Jakość rysowania (liczba próbek na oś)",
+        min_value=250,
+        max_value=1100,
+        value=650,
+        step=50,
+        help="Większa wartość daje gładszy przeciwobraz, ale obliczenia trwają dłużej.",
+    )
+
     if st.button("Oblicz i rysuj", type="primary"):
         if a > b or c > d:
             st.error("Okno musi spełniać x min <= x max oraz y min <= y max.")
@@ -117,7 +126,7 @@ def render() -> None:
         render_dual_value(dv, "Wartość f(x0, y0)")
 
         st.write("### Przybliżenie przeciwobrazu")
-        resolution = 420
+        resolution = int(quality_resolution)
         x_vals = np.linspace(a, b, resolution)
         y_vals = np.linspace(c, d, resolution)
         X, Y = np.meshgrid(x_vals, y_vals)
@@ -155,7 +164,11 @@ def render() -> None:
             )
         )
         if isinstance(a_set, Interval1D):
-            for level in (float(a_set.a.evalf()), float(a_set.b.evalf())):
+            interval_levels = [
+                (float(a_set.a.evalf()), a_set.left_closed),
+                (float(a_set.b.evalf()), a_set.right_closed),
+            ]
+            for level, is_closed in interval_levels:
                 if np.isfinite(level):
                     fig.add_trace(
                         go.Contour(
@@ -163,7 +176,7 @@ def render() -> None:
                             x=x_vals,
                             y=y_vals,
                             contours=dict(start=level, end=level, size=1, coloring="lines"),
-                            line=dict(color="#1f5f9f", width=1.5),
+                            line=dict(color="#1f5f9f", width=1.7, dash="solid" if is_closed else "dash"),
                             showscale=False,
                             hoverinfo="skip",
                             name=f"f={level:g}",

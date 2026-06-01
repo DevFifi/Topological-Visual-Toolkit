@@ -17,7 +17,7 @@ PAGES = {
     "Supremum na przedziale": p2.render,
     "Supremum na prostokącie": p3.render,
     "Aproksymacja Bernsteina": p4.render,
-    "Przeciwobraz skalarny": p5.render,
+    "Funkcja R² → R i przeciwobraz": p5.render,
     "Odwzorowania wektorowe": p6.render,
 }
 
@@ -43,6 +43,8 @@ with st.sidebar.expander("Stan aplikacji", expanded=False):
     st.caption("Przywraca domyślną pamięć przykładów i czyści bieżące pola formularzy.")
     if st.button("Przywróć stan początkowy", type="secondary"):
         reset_state_from_draft()
+        st.cache_data.clear()
+        st.cache_resource.clear()
         for key in list(st.session_state.keys()):
             del st.session_state[key]
         st.session_state["state_reset_done"] = True

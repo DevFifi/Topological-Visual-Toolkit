@@ -9,6 +9,7 @@ from math_modules.finite_metric_spaces import (
     metric_formula_latex,
     metric_symbol_latex,
 )
+from math_modules.metric_set_inputs import compute_metric_set_diam, compute_metric_set_dist, parse_metric_set
 from ui.finite_metric_spaces_page import _default_points_text, _metric_options_order, _parse_points, _resize_points_text
 
 
@@ -167,3 +168,54 @@ def test_distance_set_rejects_mismatched_dimensions():
     dv, pair = compute_dist_sets([(0, 0)], [(1, 2, 3)], "Euklidesowa")
     assert dv.status == "error"
     assert pair == (-1, -1)
+
+
+def test_generated_basis_points_for_high_dimension():
+    points, valid = _parse_points("basis(dim=50)", 50)
+    assert valid
+    assert len(points) == 51
+    assert len(points[0]) == 50
+    assert points[1][0] == 1
+
+
+def test_generated_random_points_for_high_dimension():
+    points, valid = _parse_points("random(count=120, dim=50, seed=7, scale=2)", 50)
+    assert valid
+    assert len(points) == 120
+    assert len(points[0]) == 50
+
+
+def test_large_high_dimensional_distance_uses_numeric_path():
+    E, _ = _parse_points("line(count=120, dim=50)", 50)
+    F, _ = _parse_points("basis(dim=50)", 50)
+    dv, pair = compute_dist_sets(E, F, "Euklidesowa")
+    assert dv.status == "numeric"
+    assert pair[0] >= 0
+    assert float(dv.numeric) >= 0
+    assert "blokami" in dv.method
+
+
+def test_metric_box_set_diameter_and_distance():
+    square = parse_metric_set("[-1,1] x [-1,1]", 2)
+    shifted = parse_metric_set("[3,4]x[-1,1]", 2)
+    assert square is not None and shifted is not None
+    diam, _ = compute_metric_set_diam(square, "Euklidesowa")
+    dist, _ = compute_metric_set_dist(square, shifted, "Euklidesowa")
+    assert abs(float(diam.numeric) - float(sympy.sqrt(8))) < 1e-9
+    assert abs(float(dist.numeric) - 2.0) < 1e-9
+
+
+def test_metric_box_set_open_boundary_reports_infimum_note():
+    left = parse_metric_set("(0,1)x[0,1]", 2)
+    right = parse_metric_set("[1,2]x[0,1]", 2)
+    assert left is not None and right is not None
+    dist, _ = compute_metric_set_dist(left, right, "Euklidesowa")
+    assert abs(float(dist.numeric)) < 1e-12
+    assert any("infimum" in note for note in dist.notes)
+
+
+def test_metric_box_set_product_in_three_dimensions():
+    cube = parse_metric_set("[0,1] x [0,1] x [0,1]", 3)
+    assert cube is not None
+    diam, _ = compute_metric_set_diam(cube, "Euklidesowa")
+    assert abs(float(diam.numeric) - float(sympy.sqrt(3))) < 1e-9

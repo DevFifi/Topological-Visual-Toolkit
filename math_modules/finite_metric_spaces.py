@@ -211,8 +211,120 @@ def compute_distance_matrix(points: List[Tuple[Any, ...]], metric_name: str, cus
     return matrix
 
 
+def _points_to_float_array(points: List[Tuple[Any, ...]]) -> Optional[np.ndarray]:
+    try:
+        arr = np.asarray(
+            [[float(sympy.N(coord)) for coord in point] for point in points],
+            dtype=float,
+        )
+        if arr.ndim != 2 or not np.all(np.isfinite(arr)):
+            return None
+        return arr
+    except Exception:
+        return None
+
+
+def _minkowski_p_value(custom_formula: str) -> Optional[float]:
+    p_res = parse_expression(custom_formula or "2")
+    if not p_res.is_valid:
+        return None
+    try:
+        p_val = float(p_res.expr.evalf())
+    except Exception:
+        return None
+    return p_val if np.isfinite(p_val) and p_val > 0 else None
+
+
+def _numeric_distance_block(
+    a_block: np.ndarray,
+    b_block: np.ndarray,
+    metric: str,
+    custom_formula: str,
+) -> Optional[np.ndarray]:
+    diff = np.abs(a_block[:, None, :] - b_block[None, :, :])
+    tol = 1e-12
+
+    if metric == "Discrete":
+        return np.where(np.all(diff <= tol, axis=2), 0.0, 1.0)
+    if metric == "Hamming":
+        return np.sum(diff > tol, axis=2).astype(float)
+    if metric == "Manhattan":
+        return np.sum(diff, axis=2)
+    if metric == "Euclidean":
+        return np.sqrt(np.sum(diff * diff, axis=2))
+    if metric == "Chebyshev":
+        return np.max(diff, axis=2)
+    if metric == "Minkowski":
+        p_val = _minkowski_p_value(custom_formula)
+        if p_val is None:
+            return None
+        summed = np.sum(diff ** p_val, axis=2)
+        return summed ** (1.0 / p_val) if p_val >= 1 else summed
+
+    return None
+
+
+def _numeric_pairwise_extreme(
+    left: List[Tuple[Any, ...]],
+    right: List[Tuple[Any, ...]],
+    metric_name: str,
+    custom_formula: str,
+    *,
+    find_minimum: bool,
+    block_size: int = 160,
+) -> Tuple[DualValue, Tuple[int, int]]:
+    metric = normalize_metric_name(metric_name)
+    left_arr = _points_to_float_array(left)
+    right_arr = _points_to_float_array(right)
+    if left_arr is None or right_arr is None:
+        return DualValue(status="error", notes=["Duzy zbior zawiera wspolrzedne, ktorych nie da sie bezpiecznie policzyc numerycznie."]), (-1, -1)
+    if left_arr.shape[1] != right_arr.shape[1]:
+        return DualValue(status="error", notes=["Zbiory maja rozne wymiary punktow."]), (-1, -1)
+
+    best_value = np.inf if find_minimum else -np.inf
+    best_pair = (-1, -1)
+    for i0 in range(0, left_arr.shape[0], block_size):
+        a_block = left_arr[i0:i0 + block_size]
+        for j0 in range(0, right_arr.shape[0], block_size):
+            b_block = right_arr[j0:j0 + block_size]
+            distances = _numeric_distance_block(a_block, b_block, metric, custom_formula)
+            if distances is None:
+                return DualValue(status="error", notes=["Dla duzych zbiorow szybka sciezka obsluguje metryki standardowe, bez metryki wlasnej."]), (-1, -1)
+            finite = np.isfinite(distances)
+            if not finite.any():
+                continue
+            masked = np.where(finite, distances, np.inf if find_minimum else -np.inf)
+            local_flat = int(np.argmin(masked) if find_minimum else np.argmax(masked))
+            local_value = float(masked.ravel()[local_flat])
+            improves = local_value < best_value if find_minimum else local_value > best_value
+            if improves:
+                local_i, local_j = np.unravel_index(local_flat, masked.shape)
+                best_value = local_value
+                best_pair = (i0 + int(local_i), j0 + int(local_j))
+
+    if best_pair == (-1, -1) or not np.isfinite(best_value):
+        return DualValue(status="error", notes=["Nie znaleziono skonczonej odleglosci."]), (-1, -1)
+
+    action = "minimum" if find_minimum else "maksimum"
+    return DualValue(
+        numeric=f"{best_value:.15g}",
+        status="numeric",
+        method=f"Numeryczne {action} blokami dla {len(left)} x {len(right)} par w R^{left_arr.shape[1]}.",
+    ), best_pair
+
+
+def _should_use_numeric_pairwise(points_count: int, other_count: int, dim: int, metric: str) -> bool:
+    if metric == "custom":
+        return False
+    pair_count = points_count * other_count
+    return dim > 20 or pair_count > 8000
+
+
 def compute_diam(points: List[Tuple[Any, ...]], metric_name: str, custom_formula: str = "") -> Tuple[DualValue, Tuple[int, int]]:
     metric = normalize_metric_name(metric_name)
+    if _same_dimension(points) and _should_use_numeric_pairwise(len(points), len(points), len(points[0]), metric):
+        return _numeric_pairwise_extreme(points, points, metric, custom_formula, find_minimum=False)
+
     matrix = compute_distance_matrix(points, metric, custom_formula)
     if not matrix:
         return DualValue(status="error", notes=["Zbiór jest pusty albo punkty mają różne wymiary."]), (-1, -1)
@@ -249,6 +361,9 @@ def compute_dist_sets(
         return DualValue(status="error", notes=["Zbiory E i F mają różne wymiary punktów."]), (-1, -1)
 
     dim = len(E[0])
+    if _should_use_numeric_pairwise(len(E), len(F), dim, metric):
+        return _numeric_pairwise_extreme(E, F, metric, custom_formula, find_minimum=True)
+
     formula, status = _get_distance_formula(metric, custom_formula, dim)
     if status == "error":
         return DualValue(status="error", notes=["Niepoprawna metryka."]), (-1, -1)

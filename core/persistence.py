@@ -3,9 +3,10 @@ import os
 from copy import deepcopy
 from typing import Dict, Any
 
-APP_STATE_PATH = os.path.join("data", "app_state.json")
-APP_STATE_DRAFT_PATH = os.path.join("data", "app_state_draft.json")
-DRAFT_SEED_VERSION = 1
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+APP_STATE_PATH = os.path.join(PROJECT_ROOT, "data", "app_state.json")
+APP_STATE_DRAFT_PATH = os.path.join(PROJECT_ROOT, "data", "app_state_draft.json")
+DRAFT_SEED_VERSION = 4
 DRAFT_SEED_SETTING = "_draft_seed_version"
 
 DEFAULT_STATE: Dict[str, Any] = {
@@ -105,16 +106,26 @@ def _merge_draft_examples(state: Dict[str, Any]) -> Dict[str, Any]:
         if not isinstance(current_value, list):
             current_value = []
 
-        existing_ids = {entry.get("id") for entry in current_value if isinstance(entry, dict)}
-        existing_raw = {entry.get("raw_value") for entry in current_value if isinstance(entry, dict)}
         merged = list(current_value)
+        existing_by_id = {
+            entry.get("id"): idx
+            for idx, entry in enumerate(merged)
+            if isinstance(entry, dict) and entry.get("id")
+        }
+        existing_raw = {entry.get("raw_value") for entry in merged if isinstance(entry, dict)}
         for entry in draft_value:
             if not isinstance(entry, dict):
                 continue
-            if entry.get("id") in existing_ids or entry.get("raw_value") in existing_raw:
+            entry_id = entry.get("id")
+            if entry_id in existing_by_id:
+                merged[existing_by_id[entry_id]] = entry
+                existing_raw.add(entry.get("raw_value"))
+                continue
+            if entry.get("raw_value") in existing_raw:
                 continue
             merged.append(entry)
-            existing_ids.add(entry.get("id"))
+            if entry_id:
+                existing_by_id[entry_id] = len(merged) - 1
             existing_raw.add(entry.get("raw_value"))
         state[key] = merged
     return state
