@@ -1,156 +1,272 @@
+import re
+from typing import Any, List, Optional, Tuple
+
+import numpy as np
 import sympy
-from typing import List, Tuple, Any, Optional
+
 from core.exact_numeric import DualValue
-from core.expression_parser import parse_expression
+from core.expression_parser import normalize_expression_input, parse_expression
+from core.formatting import latex_exact, simplify_exact
+
+
+METRIC_DISPLAY_NAMES = {
+    "Euclidean": "Euklidesowa",
+    "Manhattan": "Manhattan",
+    "Chebyshev": "Czebyszewa",
+    "Discrete": "Dyskretna",
+    "Hamming": "Hamminga",
+    "Minkowski": "Minkowskiego",
+    "custom": "Własna",
+}
+
+POLISH_TO_INTERNAL = {
+    "Euklidesowa": "Euclidean",
+    "Manhattan": "Manhattan",
+    "Czebyszewa": "Chebyshev",
+    "Dyskretna": "Discrete",
+    "Hamminga": "Hamming",
+    "Minkowskiego": "Minkowski",
+    "Własna": "custom",
+}
+
+
+def normalize_metric_name(metric_name: str) -> str:
+    return POLISH_TO_INTERNAL.get(metric_name, metric_name)
+
+
+def metric_display_name(metric_name: str) -> str:
+    return METRIC_DISPLAY_NAMES.get(normalize_metric_name(metric_name), metric_name)
+
+
+def metric_symbol_latex(metric_name: str, custom_formula: str = "") -> str:
+    metric = normalize_metric_name(metric_name)
+    if metric == "Euclidean":
+        return "d_{2}"
+    if metric == "Manhattan":
+        return "d_{1}"
+    if metric == "Chebyshev":
+        return "d_{\\infty}"
+    if metric == "Discrete":
+        return "\\delta"
+    if metric == "Hamming":
+        return "d_{H}"
+    if metric == "Minkowski":
+        p_res = parse_expression(custom_formula or "p")
+        p_latex = sympy.latex(p_res.expr) if p_res.is_valid else "p"
+        return f"d_{{{p_latex}}}"
+    if metric == "custom":
+        return "\\varphi"
+    return "d"
+
+
+def _replace_placeholders(expr: str, index: int) -> str:
+    expr = re.sub(r"\bxi\b", f"x{index}", expr)
+    expr = re.sub(r"\byi\b", f"y{index}", expr)
+    return expr
+
 
 def expand_sum_macro(formula_str: str, dim: int) -> str:
     if "SUM(" not in formula_str:
         return formula_str
-    res = ""
+
+    result = []
     i = 0
     while i < len(formula_str):
-        if formula_str[i:].startswith("SUM("):
+        if formula_str.startswith("SUM(", i):
             start = i + 4
-            paren_count = 1
+            depth = 1
             j = start
-            while j < len(formula_str) and paren_count > 0:
-                if formula_str[j] == '(': paren_count += 1
-                elif formula_str[j] == ')': paren_count -= 1
+            while j < len(formula_str) and depth > 0:
+                if formula_str[j] == "(":
+                    depth += 1
+                elif formula_str[j] == ")":
+                    depth -= 1
                 j += 1
-            if paren_count == 0:
-                inner_expr = formula_str[start:j-1]
-                expanded = []
-                for k in range(1, dim + 1):
-                    term = inner_expr.replace("xi", f"x{k}").replace("yi", f"y{k}").replace("|", "Abs(")
-                    term = term.replace("Abs(x", "Abs(x").replace(")", ")") # simplified absolute handling
-                    expanded.append(f"({term})")
-                res += "(" + " + ".join(expanded) + ")"
+            if depth == 0:
+                inner = formula_str[start:j - 1]
+                terms = [_replace_placeholders(inner, k) for k in range(1, dim + 1)]
+                result.append("(" + " + ".join(f"({term})" for term in terms) + ")")
                 i = j
                 continue
-        res += formula_str[i]
+        result.append(formula_str[i])
         i += 1
-    return res
+    return "".join(result)
+
 
 def _get_distance_formula(metric_name: str, custom_formula: str, dim: int) -> Tuple[Optional[Any], str]:
-    if metric_name == "custom" and custom_formula:
-        import re
-        custom_formula = re.sub(r'\|([^|]+)\|', r'Abs(\1)', custom_formula)
-        custom_formula = expand_sum_macro(custom_formula, dim)
-        res = parse_expression(custom_formula)
-        if res.is_valid:
-            return res.expr, "exact_and_numeric"
+    metric = normalize_metric_name(metric_name)
+    if dim <= 0:
         return None, "error"
-        
-    x_vars = [sympy.Symbol(f"x{i+1}", real=True) for i in range(dim)]
-    y_vars = [sympy.Symbol(f"y{i+1}", real=True) for i in range(dim)]
-    
-    if metric_name == "Euclidean":
-        return sympy.sqrt(sum((x - y)**2 for x, y in zip(x_vars, y_vars))), "exact_and_numeric"
-    elif metric_name == "Manhattan":
+
+    if metric == "custom":
+        if not custom_formula.strip():
+            return None, "error"
+        formula_text = expand_sum_macro(normalize_expression_input(custom_formula), dim)
+        formula_text = _replace_placeholders(formula_text, 1)
+        res = parse_expression(formula_text)
+        return (res.expr, "exact_and_numeric") if res.is_valid else (None, "error")
+
+    x_vars = [sympy.Symbol(f"x{i + 1}", real=True) for i in range(dim)]
+    y_vars = [sympy.Symbol(f"y{i + 1}", real=True) for i in range(dim)]
+
+    if metric == "Euclidean":
+        return sympy.sqrt(sum((x - y) ** 2 for x, y in zip(x_vars, y_vars))), "exact_and_numeric"
+    if metric == "Manhattan":
         return sum(sympy.Abs(x - y) for x, y in zip(x_vars, y_vars)), "exact_and_numeric"
-    elif metric_name == "Chebyshev":
+    if metric == "Chebyshev":
         return sympy.Max(*[sympy.Abs(x - y) for x, y in zip(x_vars, y_vars)]), "exact_and_numeric"
-    elif metric_name == "Discrete":
-        return sympy.Piecewise((0, sympy.And(*[sympy.Eq(x, y) for x, y in zip(x_vars, y_vars)])), (1, True)), "exact_and_numeric"
-    elif metric_name == "Hamming":
+    if metric == "Discrete":
+        return sympy.Piecewise(
+            (0, sympy.And(*[sympy.Eq(x, y) for x, y in zip(x_vars, y_vars)])),
+            (1, True),
+        ), "exact_and_numeric"
+    if metric == "Hamming":
         return sum(sympy.Piecewise((0, sympy.Eq(x, y)), (1, True)) for x, y in zip(x_vars, y_vars)), "exact_and_numeric"
-    elif metric_name == "Minkowski":
+    if metric == "Minkowski":
+        p_res = parse_expression(custom_formula)
+        if not p_res.is_valid:
+            return None, "error"
         try:
-            p_val = float(custom_formula)
-            if p_val < 1:
-                return sum(sympy.Abs(x - y)**p_val for x, y in zip(x_vars, y_vars)), "exact_and_numeric"
-            else:
-                return (sum(sympy.Abs(x - y)**p_val for x, y in zip(x_vars, y_vars)))**(1/p_val), "exact_and_numeric"
+            p_numeric = float(p_res.expr.evalf())
         except Exception:
             return None, "error"
-        
+        if not np.isfinite(p_numeric) or p_numeric <= 0:
+            return None, "error"
+        base_sum = sum(sympy.Abs(x - y) ** p_res.expr for x, y in zip(x_vars, y_vars))
+        if p_numeric >= 1:
+            return base_sum ** (1 / p_res.expr), "exact_and_numeric"
+        return base_sum, "exact_and_numeric"
+
     return None, "error"
 
+
+def metric_formula_latex(metric_name: str, custom_formula: str, dim: int) -> Optional[str]:
+    formula, status = _get_distance_formula(metric_name, custom_formula, dim)
+    if status == "error" or formula is None:
+        return None
+    return f"{metric_symbol_latex(metric_name, custom_formula)}(x,y) = {sympy.latex(formula)}"
+
+
 def compute_distance(p1: Tuple[Any, ...], p2: Tuple[Any, ...], formula: Any, metric_name: str) -> DualValue:
-    if metric_name == "Discrete":
+    metric = normalize_metric_name(metric_name)
+    if len(p1) != len(p2):
+        return DualValue(status="error", notes=["Punkty mają różne wymiary."])
+    if formula is None:
+        return DualValue(status="error", notes=["Niepoprawna metryka albo jej parametr."])
+
+    if metric == "Discrete":
         try:
             is_same = all(sympy.simplify(c1 - c2) == 0 for c1, c2 in zip(p1, p2))
             val = 0 if is_same else 1
-            return DualValue(exact=str(val), numeric=str(val), status="exact_and_numeric")
+            return DualValue(exact=str(val), exact_latex=str(val), numeric=str(val), status="exact_and_numeric")
         except Exception:
-            return DualValue(status="error", notes=["Błąd porównania punktów"])
-            
-    dim = len(p1)
+            return DualValue(status="error", notes=["Nie udało się porównać punktów."])
+
     subs = {}
-    for i in range(dim):
-        subs[sympy.Symbol(f"x{i+1}", real=True)] = p1[i]
-        subs[sympy.Symbol(f"y{i+1}", real=True)] = p2[i]
-        
+    for i, (c1, c2) in enumerate(zip(p1, p2), start=1):
+        subs[sympy.Symbol(f"x{i}", real=True)] = c1
+        subs[sympy.Symbol(f"y{i}", real=True)] = c2
+
     try:
-        exact_val = formula.subs(subs)
-        numeric_val = exact_val.evalf()
+        exact_val = simplify_exact(formula.subs(subs))
+        numeric_val = float(exact_val.evalf())
+        if not np.isfinite(numeric_val):
+            return DualValue(status="error", notes=["Wynik nie jest skończoną liczbą rzeczywistą."])
         return DualValue(
-            exact=str(sympy.simplify(exact_val)),
-            numeric=str(float(numeric_val)),
-            status="exact_and_numeric"
+            exact=str(exact_val),
+            exact_latex=latex_exact(exact_val),
+            numeric=str(numeric_val),
+            status="exact_and_numeric",
         )
     except Exception:
-        return DualValue(status="error", notes=["Błąd obliczenia odległości"])
+        return DualValue(status="error", notes=["Nie udało się obliczyć odległości."])
+
+
+def _same_dimension(points: List[Tuple[Any, ...]]) -> bool:
+    return bool(points) and all(len(p) == len(points[0]) for p in points)
+
 
 def compute_distance_matrix(points: List[Tuple[Any, ...]], metric_name: str, custom_formula: str = "") -> List[List[DualValue]]:
-    if not points:
+    metric = normalize_metric_name(metric_name)
+    if not _same_dimension(points):
         return []
-        
+
     dim = len(points[0])
-    formula, _ = _get_distance_formula(metric_name, custom_formula, dim)
-    
+    formula, status = _get_distance_formula(metric, custom_formula, dim)
+    if status == "error":
+        return [[DualValue(status="error", notes=["Niepoprawna metryka."]) for _ in points] for _ in points]
+
     n = len(points)
     matrix = [[DualValue() for _ in range(n)] for _ in range(n)]
-    
+
     for i in range(n):
         for j in range(n):
             if i == j:
-                matrix[i][j] = DualValue(exact="0", numeric="0.0", status="exact_and_numeric")
+                matrix[i][j] = DualValue(exact="0", exact_latex="0", numeric="0.0", status="exact_and_numeric")
             elif i < j:
-                dv = compute_distance(points[i], points[j], formula, metric_name)
+                dv = compute_distance(points[i], points[j], formula, metric)
                 matrix[i][j] = dv
                 matrix[j][i] = dv
-                
+
     return matrix
 
+
 def compute_diam(points: List[Tuple[Any, ...]], metric_name: str, custom_formula: str = "") -> Tuple[DualValue, Tuple[int, int]]:
-    matrix = compute_distance_matrix(points, metric_name, custom_formula)
-    n = len(points)
-    max_val = -1.0
+    metric = normalize_metric_name(metric_name)
+    matrix = compute_distance_matrix(points, metric, custom_formula)
+    if not matrix:
+        return DualValue(status="error", notes=["Zbiór jest pusty albo punkty mają różne wymiary."]), (-1, -1)
+
+    max_val = -np.inf
     best_pair = (0, 0)
-    best_dv = DualValue(exact="0", numeric="0.0", status="exact_and_numeric")
-    
-    for i in range(n):
-        for j in range(i+1, n):
+    best_dv = DualValue(exact="0", exact_latex="0", numeric="0.0", status="exact_and_numeric")
+
+    for i in range(len(points)):
+        for j in range(i + 1, len(points)):
             dv = matrix[i][j]
-            if dv.numeric:
-                val = float(dv.numeric)
-                if val > max_val:
-                    max_val = val
-                    best_pair = (i, j)
-                    best_dv = dv
-                    
+            try:
+                val = float(dv.numeric) if dv.numeric is not None else np.nan
+            except Exception:
+                val = np.nan
+            if np.isfinite(val) and val > max_val:
+                max_val = val
+                best_pair = (i, j)
+                best_dv = dv
+
     return best_dv, best_pair
 
-def compute_dist_sets(E: List[Tuple[Any, ...]], F: List[Tuple[Any, ...]], metric_name: str, custom_formula: str = "") -> Tuple[DualValue, Tuple[int, int]]:
-    if not E or not F:
-        return DualValue(status="error"), (-1, -1)
-        
+
+def compute_dist_sets(
+    E: List[Tuple[Any, ...]],
+    F: List[Tuple[Any, ...]],
+    metric_name: str,
+    custom_formula: str = "",
+) -> Tuple[DualValue, Tuple[int, int]]:
+    metric = normalize_metric_name(metric_name)
+    if not _same_dimension(E) or not _same_dimension(F):
+        return DualValue(status="error", notes=["Zbiory są puste albo mają niespójne wymiary."]), (-1, -1)
+    if len(E[0]) != len(F[0]):
+        return DualValue(status="error", notes=["Zbiory E i F mają różne wymiary punktów."]), (-1, -1)
+
     dim = len(E[0])
-    formula, _ = _get_distance_formula(metric_name, custom_formula, dim)
-    
-    min_val = float('inf')
-    best_pair = (0, 0)
-    best_dv = DualValue(status="error")
-    
+    formula, status = _get_distance_formula(metric, custom_formula, dim)
+    if status == "error":
+        return DualValue(status="error", notes=["Niepoprawna metryka."]), (-1, -1)
+
+    min_val = np.inf
+    best_pair = (-1, -1)
+    best_dv = DualValue(status="error", notes=["Nie znaleziono poprawnej odległości."])
+
     for i, p1 in enumerate(E):
         for j, p2 in enumerate(F):
-            dv = compute_distance(p1, p2, formula, metric_name)
-            if dv.numeric:
-                val = float(dv.numeric)
-                if val < min_val:
-                    min_val = val
-                    best_pair = (i, j)
-                    best_dv = dv
-                    
+            dv = compute_distance(p1, p2, formula, metric)
+            try:
+                val = float(dv.numeric) if dv.numeric is not None else np.nan
+            except Exception:
+                val = np.nan
+            if np.isfinite(val) and val < min_val:
+                min_val = val
+                best_pair = (i, j)
+                best_dv = dv
+
     return best_dv, best_pair

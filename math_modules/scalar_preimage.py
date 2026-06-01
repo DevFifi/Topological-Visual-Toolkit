@@ -1,8 +1,9 @@
 import sympy
 import numpy as np
-from typing import Any, Tuple, Optional
+from typing import Any, Tuple
 from core.set_parser import ParsedSet
 from core.exact_numeric import DualValue
+from core.formatting import latex_exact, simplify_exact
 from core.safe_eval import create_numpy_func_2d
 
 def compute_scalar_preimage_membership(
@@ -18,24 +19,36 @@ def compute_scalar_preimage_membership(
     try:
         exact_val = f_expr.subs({x: sympy.sympify(px), y: sympy.sympify(py)})
         numeric_val = float(exact_val.evalf())
+        if not np.isfinite(numeric_val):
+            raise ValueError
         
+        simplified_exact = simplify_exact(exact_val)
         dv = DualValue(
-            exact=str(sympy.simplify(exact_val)),
+            exact=str(simplified_exact),
+            exact_latex=latex_exact(simplified_exact),
             numeric=str(numeric_val),
             status="exact_and_numeric",
             precision_digits=precision
         )
         
         sym_check = A_set.contains_symbolic(exact_val)
-        if sym_check in [True, False]:
+        if sym_check == sympy.true or sym_check is True:
             return "true" if sym_check else "false", dv
+        if sym_check == sympy.false or sym_check is False:
+            return "false", dv
             
-        num_check = A_set.contains_numeric(numeric_val)
-        return "true" if num_check else "false", dv
+        return A_set.classify_numeric(numeric_val), dv
         
     except Exception:
         f_num = create_numpy_func_2d(f_expr, x, y)
-        numeric_val = f_num(np.array([px]), np.array([py]))[0]
+        try:
+            px_num = float(sympy.sympify(px).evalf())
+            py_num = float(sympy.sympify(py).evalf())
+        except Exception:
+            return "unknown", DualValue(status="error", notes=["Punkt nie ma skończonych współrzędnych rzeczywistych."])
+        numeric_val = f_num(np.array([px_num], dtype=float), np.array([py_num], dtype=float))[0]
+        if not np.isfinite(numeric_val):
+            return "unknown", DualValue(status="error", notes=["Wartość funkcji w punkcie nie jest skończona."])
         
         dv = DualValue(
             numeric=str(numeric_val),
@@ -43,5 +56,4 @@ def compute_scalar_preimage_membership(
             precision_digits=precision
         )
         
-        num_check = A_set.contains_numeric(numeric_val)
-        return "true" if num_check else "false", dv
+        return A_set.classify_numeric(numeric_val), dv

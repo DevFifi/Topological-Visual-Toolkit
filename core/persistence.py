@@ -1,8 +1,10 @@
 import json
 import os
+import shutil
 from typing import Dict, Any
 
 APP_STATE_PATH = os.path.join("data", "app_state.json")
+APP_STATE_DRAFT_PATH = os.path.join("data", "app_state_draft.json")
 
 DEFAULT_STATE: Dict[str, Any] = {
     "functions_1d": [],
@@ -50,3 +52,11 @@ def save_state(state: Dict[str, Any]) -> None:
     ensure_data_dir_exists()
     with open(APP_STATE_PATH, "w", encoding="utf-8") as f:
         json.dump(state, f, indent=2, ensure_ascii=False)
+
+
+def reset_state_from_draft() -> None:
+    ensure_data_dir_exists()
+    if not os.path.exists(APP_STATE_DRAFT_PATH):
+        save_state(DEFAULT_STATE.copy())
+        return
+    shutil.copyfile(APP_STATE_DRAFT_PATH, APP_STATE_PATH)

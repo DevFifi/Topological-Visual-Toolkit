@@ -1,7 +1,9 @@
 import streamlit as st
 
+
 def apply_global_styles() -> None:
-    st.markdown("""
+    st.markdown(
+        """
         <style>
         #MainMenu {visibility: hidden;}
         footer {visibility: hidden;}
@@ -9,72 +11,44 @@ def apply_global_styles() -> None:
 
         .stApp {
             background-color: #fbfbfb;
-            font-family: 'Inter', sans-serif;
+            font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         }
-        .metric-card {
-            background-color: white;
-            padding: 1.5rem;
-            border-radius: 8px;
-            border: 1px solid #eaeaea;
-            margin-bottom: 1.5rem;
+        h1, h2, h3 {
+            letter-spacing: 0;
         }
         .dual-value-box {
-            border: 1px solid #e0e0e0;
+            border: 1px solid #dedede;
             border-radius: 6px;
             overflow: hidden;
-            margin-bottom: 1rem;
+            margin-bottom: 0.75rem;
+            background: white;
         }
         .dual-exact {
             background-color: #f5f7fa;
             padding: 0.75rem 1rem;
-            border-bottom: 1px solid #e0e0e0;
-            font-family: 'Courier New', Courier, monospace;
-            color: #2c3e50;
+            border-bottom: 1px solid #dedede;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            color: #213547;
+            overflow-x: auto;
         }
         .dual-numeric {
             background-color: #ffffff;
-            padding: 0.5rem 1rem;
-            font-size: 0.9em;
-            color: #596a7a;
+            padding: 0.55rem 1rem;
+            font-size: 0.92rem;
+            color: #4d5b68;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
         }
         .dual-interval {
-            background-color: #fdfdfd;
+            background-color: #ffffff;
             padding: 0.75rem 1rem;
-            font-family: 'Courier New', Courier, monospace;
-            color: #34495e;
-            text-align: center;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            color: #213547;
+            overflow-x: auto;
         }
-        .table-cell-dual {
-            display: flex;
-            flex-direction: column;
-            border: 1px solid #eee;
-            border-radius: 4px;
-            overflow: hidden;
-            text-align: center;
-            min-width: 120px;
-        }
-        .table-cell-exact {
-            padding: 4px;
-            background-color: #f8f9fa;
-            border-bottom: 1px solid #eee;
-            font-family: monospace;
-            font-size: 0.9em;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .table-cell-numeric {
-            padding: 4px;
-            background-color: white;
-            font-size: 0.8em;
-            color: #666;
-        }
-        .table-cell-single {
-            padding: 8px;
-            text-align: center;
-            border: 1px solid #eee;
-            border-radius: 4px;
-            font-family: monospace;
+        div[data-testid="stCaptionContainer"] {
+            color: #59636e;
         }
         </style>
-    """, unsafe_allow_html=True)
+        """,
+        unsafe_allow_html=True,
+    )
