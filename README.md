@@ -1,49 +1,98 @@
 # Topological Visual Toolkit
 
-Aplikacja Streamlit przygotowana na projekt z przedmiotu **Elementy topologii stosowanej**.
-Zawiera sześć podprogramów:
+Aplikacja Streamlit przygotowana jako projekt z przedmiotu **Elementy topologii stosowanej**.
 
-1. skończone przestrzenie metryczne,
-2. odległość supremum na przedziale,
-3. odległość supremum na prostokącie,
-4. aproksymację wielomianami Bernsteina,
-5. przeciwobraz funkcji skalarnej,
-6. obraz i przeciwobraz odwzorowania `R² -> R²`.
+- Działająca aplikacja: <https://topological-visual-toolkit.streamlit.app>
+- Dokumentacja projektu: [`docs/dokumentacja.pdf`](docs/dokumentacja.pdf)
+- Źródło LaTeX dokumentacji: [`docs/dokumentacja.tex`](docs/dokumentacja.tex)
 
-## Uruchomienie
+## Zakres projektu
 
-```bash
+Aplikacja zawiera sześć modułów:
+
+1. **Skończone przestrzenie metryczne** - macierze odległości, średnica zbioru i odległość między zbiorami w `R^n`.
+2. **Odległość supremum na przedziale** - przybliżone i częściowo symboliczne liczenie `d∞(f,g)` dla funkcji jednej zmiennej.
+3. **Odległość supremum na prostokącie** - numeryczne liczenie `d∞(f,g)` dla funkcji dwóch zmiennych na prostokącie.
+4. **Aproksymacja Bernsteina** - wykresy, błąd Czebyszewa i animacja wielomianów Bernsteina.
+5. **Przeciwobraz funkcji skalarnej** - sprawdzanie przynależności punktu do `f^{-1}(A)` i rysowanie przeciwobrazu.
+6. **Odwzorowania wektorowe** - przybliżone rysowanie obrazu `Φ(C)` i przeciwobrazu `Φ^{-1}(B)`.
+
+## Najważniejsze funkcje
+
+- wejścia matematyczne w zwykłym zapisie i w prostym stylu LaTeX,
+- podgląd rozpoznanych wzorów w postaci matematycznej,
+- klawiatura matematyczna w panelu bocznym,
+- lokalna historia przykładów osobna dla modułów,
+- dokładne wartości tam, gdzie SymPy potrafi je sensownie uprościć,
+- numeryczne metody dla supremów, dużych zbiorów punktów oraz rysowania zbiorów,
+- interaktywne wykresy Plotly.
+
+## Zastosowane techniki
+
+- parser wyrażeń oparty o SymPy z własną normalizacją zapisu LaTeX-like,
+- parser zbiorów obsługujący przedziały, zbiory skończone, prostokąty, relacje i operacje `\cap`, `\cup`, `\land`, `\lor`,
+- wspólny format wyniku z częścią dokładną, numeryczną, opisem metody i uwagami o dokładności,
+- lokalne doszukiwanie maksimów na siatce przez SciPy,
+- osobne sprawdzanie brzegów i narożników przy supremum na prostokącie,
+- blokowe liczenie odległości dla dużych zbiorów punktów,
+- stabilna numeryczna ewaluacja wielomianów Bernsteina dla dużych stopni,
+- rysowanie obszarów i brzegów przez siatki, maski logiczne i kontury Plotly.
+
+## Przykłady składni wejścia
+
+Funkcje:
+
+```text
+e^x
+\sqrt{x}
+\frac{1+x}{2}
+sin(50*x)
+x^2 + y^2
+```
+
+Zbiory w `R`:
+
+```text
+[0, 1]
+(0, 1]
+(-oo, 0)
+{0, 1, pi}
+[0,1] \cup {2}
+```
+
+Zbiory w `R^2`:
+
+```text
+[-1,1]x[-2,2]
+[-1,1]\times[-2,2]
+x^2 + y^2 <= 1
+1/4 < x^2 + y^2 <= 1
+(x^2+y^2-1)^3 - x^2*y^3 < 0
+```
+
+Warunki można łączyć m.in. przez `\cap`, `\cup`, `\land`, `\lor`, `and`, `or`.
+
+## Uruchomienie lokalne
+
+Wymagany jest Python zainstalowany lokalnie. Przykładowe uruchomienie w PowerShell:
+
+```powershell
 python -m venv venv
-venv\Scripts\activate
+.\venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 streamlit run app.py
 ```
 
-Jeżeli istniejący katalog `venv` wskazuje na nieistniejącego Pythona, usuń go i utwórz ponownie powyższymi komendami.
+Jeżeli katalog `venv` został utworzony wcześniej dla innej lub nieistniejącej instalacji Pythona, najprościej utworzyć nowe środowisko wirtualne i ponownie zainstalować zależności z `requirements.txt`.
 
-## Składnia wejścia
+## Testy
 
-Parser przyjmuje zwykły zapis i prosty zapis LaTeX-like:
+Testy jednostkowe znajdują się w katalogu [`tests`](tests). Można je uruchomić poleceniem:
 
-- `e^x`, `pi`, `\pi`,
-- `sqrt(x)` i `\sqrt{x}`,
-- `\frac{1}{2}`,
-- `sin(x)`, `cos(x)`, `exp(x)`, `log(x)`,
-- relacje zbiorów w `R²`, np. `x^2 + y^2 <= 1`,
-- prostokąty, np. `[-1,1]x[-1,1]` albo `[-1,1]×[-1,1]`.
-
-Historia poprawnych wejść jest dostępna bezpośrednio przy polach formularza.
-
-## Metryka Minkowskiego
-
-Dla `p >= 1` aplikacja używa wzoru
-
-```text
-d_p(x,y) = (sum_i |x_i-y_i|^p)^(1/p)
+```powershell
+pytest -q
 ```
 
-Dla `0 < p < 1` używana jest definicja z wykładu:
+## Dokumentacja
 
-```text
-d_p(x,y) = sum_i |x_i-y_i|^p
-```
+Pełny opis rozwiązania jest w pliku [`docs/dokumentacja.pdf`](docs/dokumentacja.pdf). Dokumentacja opisuje założenia, użyte metody numeryczne, obsługiwaną składnię wejścia oraz przykładowe wyniki działania każdego modułu.
